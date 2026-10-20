@@ -1,0 +1,3081 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>30 let pobočky Fantazie | SVČ Helceletka Brno</title>
+  
+  <!-- Google Fonts: Raleway & Outfit (shodné s vizuálním stylem helceletka.cz) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              green: '#76AC33',
+              greenDark: '#5e8d26',
+              greenLight: '#f0fdf4',
+              red: '#E31E24',
+              redDark: '#c2161b',
+              yellow: '#FAC311',
+              yellowDark: '#d8a70d',
+              dark: '#2B2A29',
+              slate: '#334155'
+            }
+          },
+          fontFamily: {
+            sans: ['Raleway', 'sans-serif'],
+            heading: ['Outfit', 'Raleway', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <style>
+    body {
+      font-family: 'Raleway', sans-serif;
+      color: #2B2A29;
+      background-color: #edf4e8;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: pan-y;
+    }
+    
+    h1, h2, h3, h4, .font-heading {
+      font-family: 'Outfit', 'Raleway', sans-serif;
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+      border-radius: 1rem;
+      z-index: 10;
+    }
+
+    /* REAL JIGSAW PUZZLE BOARD & PIECES */
+    .puzzle-board-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1024 / 298;
+      border-radius: 14px;
+      overflow: hidden;
+      background-color: #e2e8f0;
+      border: 2.5px solid #cbd5e1;
+      box-shadow: inset 0 3px 10px rgba(0,0,0,0.12);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #puzzle-board-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    /* Dílek v batohu (tray card) */
+    .puzzle-tray-card {
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      cursor: grab;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .puzzle-tray-card:active {
+      cursor: grabbing;
+    }
+
+    .puzzle-tray-card.is-selected {
+      border-color: #76AC33 !important;
+      box-shadow: 0 0 0 3px rgba(118, 172, 51, 0.4), 0 8px 18px rgba(0,0,0,0.12) !important;
+      transform: translateY(-2px);
+    }
+
+    .puzzle-tray-card.is-dragging-origin {
+      opacity: 0.35;
+      transform: scale(0.96);
+    }
+
+    /* Floating drag proxy */
+    #drag-proxy {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate3d(-50%, -50%, 0);
+      filter: drop-shadow(0 14px 24px rgba(0,0,0,0.4)) drop-shadow(0 2px 6px rgba(0,0,0,0.2));
+      will-change: transform, left, top;
+      transition: filter 0.15s ease;
+    }
+
+    #drag-proxy.magnetic-snap {
+      filter: drop-shadow(0 0 18px rgba(118, 172, 51, 0.9)) drop-shadow(0 8px 16px rgba(0,0,0,0.35));
+    }
+
+    @keyframes pulse-snap {
+      0%, 100% { opacity: 0.85; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.02); }
+    }
+
+    .snap-glow {
+      animation: pulse-snap 0.8s ease-in-out infinite;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+    .shake-cell {
+      animation: shake 0.4s ease;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col pb-20 selection:bg-brand-green selection:text-white bg-[#edf4e8] text-slate-800">
+
+  <!-- TOP HEADER (Rich Helceletka Green & Brand Identity) -->
+  <header class="bg-gradient-to-r from-[#629b24] via-[#76AC33] to-[#80bd3b] text-white shadow-md sticky top-0 z-40 border-b border-black/10">
+    <div class="max-w-xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
+      <!-- Helceletka Logo & Subheading -->
+      <div class="flex items-center gap-3">
+        <a href="https://helceletka.cz" target="_blank" title="SVČ Helceletka" class="bg-white px-2.5 py-1 rounded-xl shadow-xs flex items-center justify-center hover:opacity-95 transition">
+          <img src="logo_helceletka.jpg" alt="SVČ Helceletka" class="h-7 md:h-8 object-contain" />
+        </a>
+        <div class="border-l border-white/30 pl-3">
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-sm font-extrabold text-white tracking-tight leading-none font-heading">
+              FANTAZIE <span class="text-amber-200">30 LET</span>
+            </h1>
+            <span class="bg-brand-red text-white text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase leading-none shadow-xs">
+              Výročí
+            </span>
+          </div>
+          <p class="text-[10px] text-emerald-100 font-medium mt-0.5 leading-none">
+            13.–30. 11. • Slatinská jubilejní stezka
+          </p>
+        </div>
+      </div>
+
+      <!-- Team Badge / Profile & Logout Actions -->
+      <div class="flex items-center gap-1.5">
+        <button id="header-admin-badge" onclick="openAdminModal()" class="hidden bg-amber-400 hover:bg-amber-500 text-amber-950 text-[10px] font-black px-2 py-1 rounded-full border border-amber-300 shadow-xs flex items-center gap-1 transition" title="Admin režim aktivní - klikněte pro správu">
+          <i class="fa-solid fa-key"></i> Admin
+        </button>
+        <button id="btn-cloud-status" onclick="openCloudConfigModal()" class="w-7 h-7 bg-white/20 hover:bg-white/30 text-white rounded-full flex items-center justify-center border border-white/30 transition text-xs" title="Online synchronizace s Google Tabulkou">
+          <i id="cloud-icon" class="fa-solid fa-cloud text-[11px] text-emerald-200"></i>
+        </button>
+        <button id="btn-team-profile" onclick="openEditTeamModal()" class="bg-white/20 hover:bg-white/30 text-white text-xs px-2.5 py-1.5 rounded-full flex items-center gap-1.5 border border-white/30 backdrop-blur transition font-semibold" title="Správa týmu">
+          <span id="header-team-indicator" class="w-2 h-2 rounded-full bg-emerald-300"></span>
+          <span id="header-team-name" class="max-w-[80px] truncate font-bold text-white">Přihlásit</span>
+          <i class="fa-solid fa-user-gear text-[10px] text-emerald-100"></i>
+        </button>
+        <button id="btn-header-logout" onclick="confirmLogoutTeam()" class="hidden w-7 h-7 bg-white/20 hover:bg-brand-red text-white rounded-full flex items-center justify-center border border-white/30 transition text-xs" title="Odhlásit tým ze zařízení">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- PROGRESS BAR STRIP (Rich contrast) -->
+    <div class="bg-black/15 border-t border-black/10 px-4 py-2 text-xs">
+      <div class="max-w-xl mx-auto flex items-center justify-between font-semibold text-emerald-100">
+        <span class="flex items-center gap-1.5">
+          <i class="fa-solid fa-location-dot text-amber-300"></i> Stanoviště: <b id="stat-visited" class="text-white ml-0.5 font-bold">0</b>/12
+        </span>
+        <span class="flex items-center gap-1.5">
+          <i class="fa-solid fa-star text-yellow-300"></i> Správně: <b id="stat-correct" class="text-white ml-0.5 font-bold">0</b>/12 cíl
+        </span>
+        <span class="flex items-center gap-1.5">
+          <i class="fa-solid fa-puzzle-piece text-amber-200"></i> Logo: <b id="stat-puzzle" class="text-white ml-0.5 font-bold">0%</b>
+        </span>
+      </div>
+      <div class="w-full bg-black/25 h-2 rounded-full overflow-hidden mt-1.5 max-w-xl mx-auto">
+        <div id="progress-bar-fill" class="bg-amber-300 h-full w-0 transition-all duration-500 rounded-full"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 max-w-xl w-full mx-auto p-4 space-y-4">
+
+    <!-- TEAM INFO BANNER (S TLAČÍTKY UPRAVIT & ODHLÁSIT) -->
+    <div id="team-info-banner" class="bg-white/95 p-3.5 rounded-2xl border-2 border-brand-green/30 shadow-xs flex items-center justify-between gap-2 backdrop-blur-xs">
+      <div class="flex items-center gap-3 min-w-0">
+        <div id="team-info-avatar" class="w-9 h-9 rounded-xl bg-brand-green text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <div class="min-w-0">
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Aktivní tým na trase</span>
+          <h3 id="current-team-display" class="font-bold text-sm text-brand-dark leading-tight truncate">Nepřihlášeno</h3>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button id="btn-banner-edit" onclick="openEditTeamModal()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg transition border border-slate-200" title="Upravit údaje týmu">
+          Upravit
+        </button>
+        <button id="btn-banner-logout" onclick="confirmLogoutTeam()" class="text-xs bg-rose-50 hover:bg-rose-100 text-brand-red font-bold px-2.5 py-1.5 rounded-lg transition border border-rose-200 flex items-center gap-1" title="Odhlásit tým z tohoto zařízení">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          <span>Odhlásit</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 1: INTERAKTIVNÍ MAPA -->
+    <section id="tab-map" class="tab-content space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="font-heading font-bold text-lg text-brand-dark flex items-center gap-2">
+          <i class="fa-solid fa-map-location-dot text-brand-green"></i> Mapa stanovišť ve Slatině
+        </h2>
+        <button onclick="locateUser()" class="text-xs bg-white border border-brand-green/30 hover:bg-brand-greenLight text-brand-dark px-3 py-1.5 rounded-xl shadow-xs flex items-center gap-1.5 font-bold transition">
+          <i class="fa-solid fa-crosshairs text-brand-red"></i> Kde jsem?
+        </button>
+      </div>
+
+      <div class="h-[360px] w-full rounded-2xl overflow-hidden shadow-sm border-2 border-brand-green/30 relative">
+        <div id="map"></div>
+      </div>
+
+      <!-- Legenda mapy ve firemních barvách -->
+      <div class="bg-white/95 backdrop-blur-xs p-2.5 rounded-xl border border-slate-200 text-[11px] text-slate-700 grid grid-cols-2 sm:grid-cols-4 gap-2 font-semibold shadow-xs">
+        <span class="flex items-center"><span class="inline-block w-3 h-3 rounded-full bg-slate-300 mr-1.5 border border-white shadow-xs"></span>Nenavštíveno</span>
+        <span class="flex items-center"><span class="inline-block w-3 h-3 rounded-full bg-brand-green mr-1.5 border border-white shadow-xs"></span>Napoprvé ✓</span>
+        <span class="flex items-center"><span class="inline-block w-3 h-3 rounded-full bg-amber-500 mr-1.5 border border-white shadow-xs"></span>Opraveno ✓</span>
+        <span class="flex items-center"><span class="inline-block w-3 h-3 rounded-full bg-brand-red mr-1.5 border border-white shadow-xs"></span>K opravě ✗</span>
+      </div>
+    </section>
+
+    <!-- TAB 2: SEZNAM STANOVIŠŤ A OTÁZEK -->
+    <section id="tab-stations" class="tab-content hidden space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="font-heading font-bold text-lg text-brand-dark flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-brand-green"></i> 12 stanovišť stezky
+        </h2>
+        <span class="text-xs bg-brand-greenLight text-brand-green px-3 py-1 rounded-full font-bold border border-brand-green/20">
+          Cíl: všech 12 správně
+        </span>
+      </div>
+
+      <div id="stations-list" class="space-y-2.5">
+        <!-- Vykresleno skriptem -->
+      </div>
+    </section>
+
+    <!-- TAB 3: SKLÁDÁNÍ LOGA (OPRAVDOVÉ PUZZLE S VÝKROJI A DRAG & DROP) -->
+    <section id="tab-puzzle" class="tab-content hidden space-y-4">
+      <div class="text-center">
+        <div class="inline-flex items-center gap-2 bg-brand-green text-white px-3.5 py-1 rounded-full text-xs font-bold shadow-xs mb-1.5">
+          <i class="fa-solid fa-puzzle-piece"></i> Zámkové puzzle
+        </div>
+        <h2 class="font-heading font-extrabold text-xl text-brand-dark">
+          Skládačka loga Fantazie
+        </h2>
+        <p class="text-xs text-slate-600 mt-1 max-w-sm mx-auto">
+          Dílky do sebe přesně zapadají. Poznáte podle obrázku a tvaru zámků, kam dílek patří? <b>Přetáhněte dílek na správné místo v rámu!</b>
+        </p>
+      </div>
+
+      <!-- DESKA SKLÁDAČKY S REÁLNÝMI VÝKROJI -->
+      <div class="bg-white p-4 rounded-3xl border-2 border-brand-green/30 shadow-sm space-y-3">
+        <div class="flex items-center justify-between text-xs px-1 font-bold text-brand-dark">
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-border-all text-brand-green"></i> Rám skládačky:
+          </span>
+          <span id="puzzle-board-status" class="text-brand-green font-extrabold">Složeno: 0 / 12</span>
+        </div>
+
+        <div class="puzzle-board-container" id="puzzle-board-container">
+          <!-- SVG DESKA S DEFS A KLIPY -->
+          <svg id="puzzle-board-svg" viewBox="0 0 1024 298">
+            <defs id="puzzle-defs">
+              <!-- ClipPath prvky vygenerované skriptem -->
+            </defs>
+            <!-- Pozadí desky s konturami dílků -->
+            <rect width="1024" height="298" fill="#e2e8f0" />
+            
+            <!-- Vrstva mřížky obrysů slotů -->
+            <g id="board-slots-grid"></g>
+            
+            <!-- Vrstva zvýraznění cílového slotu při tažení -->
+            <g id="board-highlight-layer"></g>
+
+            <!-- Vrstva již správně umístěných dílků -->
+            <g id="board-placed-layer"></g>
+
+            <!-- Vrstva pro klikání slotů -->
+            <g id="board-click-hitboxes"></g>
+          </svg>
+        </div>
+
+        <!-- INSTRUKCE & HINT PANEL -->
+        <div id="puzzle-selection-hint" class="bg-emerald-50 text-emerald-950 border border-emerald-200 p-2.5 rounded-xl flex items-center justify-between gap-2 shadow-2xs">
+          <span id="puzzle-hint-text" class="font-medium flex items-center gap-1.5 text-[11px]">
+            <i class="fa-solid fa-puzzle-piece text-brand-green"></i> 
+            <span>Vyberte dílek z batohu a najděte jeho místo v logu.</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- ZÁSOBNÍK / BATOH ZÍSKANÝCH DÍLKŮ S REÁLNÝMI TVARY PUZZLE (TEPLÝ PŘÍRODNÍ TÓN) -->
+      <div class="bg-gradient-to-b from-[#fefce8] to-[#fef9c3]/70 p-4 rounded-3xl border-2 border-amber-300 shadow-sm space-y-3">
+        <div class="flex items-center justify-between text-xs font-bold px-1">
+          <span class="text-amber-950 flex items-center gap-1.5">
+            <i class="fa-solid fa-toolbox text-amber-600"></i> Batoh s nalezenými dílky (táhněte prstem):
+          </span>
+          <span id="puzzle-tray-count" class="text-xs text-amber-800 font-bold">0 k dispozici</span>
+        </div>
+
+        <!-- PRÁZDNÝ STAV BATOHU -->
+        <div id="puzzle-tray-empty" class="p-6 text-center text-amber-800 bg-white/80 rounded-2xl border-2 border-dashed border-amber-300">
+          <i class="fa-solid fa-magnifying-glass-location text-2xl mb-1.5 text-amber-400 block"></i>
+          <p class="text-xs font-bold text-amber-900">V batohu zatím nemáte žádné dílky.</p>
+          <p class="text-[11px] text-amber-700 mt-0.5">Navštivte stanoviště na mapě a odpovězte správně na otázku!</p>
+        </div>
+
+        <!-- GRID DÍLKŮ V BATOHU (2 sloupce na mobilu) -->
+        <div id="puzzle-tray-grid" class="grid grid-cols-2 gap-3">
+          <!-- Dílky k dispozici v batohu vykreslené v JS -->
+        </div>
+      </div>
+
+      <!-- DOKONČENÁ SKLÁDAČKA - CELEK BEZ MŘÍŽKY -->
+      <div id="puzzle-completed-box" class="hidden bg-brand-green p-5 rounded-2xl text-white text-center shadow-md space-y-2.5">
+        <div class="text-2xl font-heading font-extrabold tracking-tight">✨ SKVĚLÁ PRÁCE! ✨</div>
+        <p class="text-xs font-semibold text-emerald-100">Poskládali jste celé výroční logo pobočky Fantazie!</p>
+        <button onclick="showTab('reward')" class="bg-white text-brand-green font-bold text-xs px-4 py-2.5 rounded-xl shadow active:scale-95 transition inline-flex items-center gap-1.5">
+          <i class="fa-solid fa-gift text-brand-red"></i> Přejít pro narozeninový dárek
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 4: ODMĚNA & CÍL (GIFT BOX & CONFETTI) -->
+    <section id="tab-reward" class="tab-content hidden space-y-4">
+      <div id="reward-locked" class="bg-white/90 p-7 rounded-3xl border-2 border-dashed border-amber-300 text-center space-y-3 shadow-xs">
+        <div class="w-16 h-16 mx-auto rounded-full bg-amber-100 flex items-center justify-center text-3xl text-amber-600">
+          <i class="fa-solid fa-gift"></i>
+        </div>
+        <h3 class="font-heading font-bold text-lg text-brand-dark">Dáreček je zatím zamčený</h3>
+        <p class="text-xs text-slate-600 max-w-xs mx-auto leading-relaxed">
+          K odemknutí narozeninové odměny musíte správně splnit <b>všech 12 stanovišť</b> (špatné odpovědi můžete kdykoliv opravit!). Aktuálně máte: <b id="reward-curr-correct" class="text-brand-green font-bold">0</b> / 12.
+        </p>
+        <button onclick="showTab('map')" class="bg-brand-green hover:bg-brand-greenDark text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition">
+          Zpět na mapu hledat dál
+        </button>
+      </div>
+
+      <div id="reward-unlocked" class="hidden bg-gradient-to-b from-amber-50/80 via-white to-emerald-50/80 p-6 rounded-3xl border-4 border-brand-green text-center space-y-4 shadow-xl">
+        <div class="inline-block relative">
+          <div class="w-20 h-20 rounded-2xl bg-brand-greenLight border border-brand-green/30 flex items-center justify-center text-4xl text-brand-green mx-auto">
+            <i class="fa-solid fa-gift"></i>
+          </div>
+          <div class="absolute -top-2 -right-2 bg-brand-red text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse shadow-xs">
+            Splněno!
+          </div>
+        </div>
+
+        <div>
+          <h2 class="font-heading font-extrabold text-2xl text-brand-dark tracking-tight">GRATULUJEME, VYHRÁLI JSTE! 🎉</h2>
+          <p class="text-xs text-slate-600 font-semibold mt-1">Úspěšně jste pokořili stezku 30 let Fantazie!</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3 shadow-xs">
+          <div>
+            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Váš unikátní výherní kód</p>
+            <div id="prize-unique-code" class="text-2xl font-black font-mono tracking-widest text-brand-green py-2 bg-slate-50 rounded-xl border border-slate-200 shadow-xs">
+              FAN30-XXXX
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-left pt-1">
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Hrající tým:</span>
+              <b id="prize-team-display" class="text-xs text-brand-dark truncate block font-bold">...</b>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Tajné heslo týmu:</span>
+              <b id="prize-password-display" class="text-xs text-brand-red truncate block font-bold">...</b>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium">
+            Výsledné skóre: <b id="prize-score-display" class="text-brand-green font-bold">0/12</b>
+          </p>
+        </div>
+
+        <!-- INSTRUKCE KAM PRO ODMĚNU -->
+        <div class="bg-white/80 p-4 rounded-2xl text-left border border-slate-200 space-y-2 text-xs">
+          <h4 class="font-bold text-brand-dark flex items-center gap-1.5 text-sm font-heading">
+            <i class="fa-solid fa-location-dot text-brand-red"></i> Kde a jak vyzvednout odměnu:
+          </h4>
+          <ul class="space-y-1.5 text-slate-600 list-disc list-inside">
+            <li>Zastavte se na <b>pobočce Fantázie</b> (SVČ Helceletka, Tilhonova 49, Brno - Slatina).</li>
+            <li>Ukažte personálu tento displej s výherním kódem nebo nadiktujte jméno týmu a heslo.</li>
+            <li>Odměnu je možné vyzvednout <b>do 30. listopadu</b> (pondělí – čtvrtek od 9:00 do 18:00 hod.).</li>
+            <li>Vaše výsledky byly uloženy pro organizátory do Google Tabulky.</li>
+          </ul>
+        </div>
+
+        <button onclick="launchConfetti()" class="w-full bg-brand-green hover:bg-brand-greenDark text-white font-bold py-3 rounded-2xl shadow-xs active:scale-95 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Vystřelit konfety znovu!
+        </button>
+      </div>
+    </section>
+
+    <!-- TEST & LASER QR SIMULATOR HELPER (POUZE PRO ADMIN / ORGANIZÁTORY) -->
+    <div id="admin-test-panel" class="hidden bg-white/95 backdrop-blur-xs rounded-2xl p-3 border-2 border-amber-300 text-xs space-y-2 shadow-xs">
+      <div class="flex items-center justify-between text-slate-600 cursor-pointer" onclick="toggleSimPanel()">
+        <span class="font-bold flex items-center gap-1.5 text-brand-dark">
+          <i class="fa-solid fa-flask text-amber-600"></i> Testovací panel stanovišť (Admin)
+        </span>
+        <i id="sim-panel-chevron" class="fa-solid fa-chevron-down text-slate-400"></i>
+      </div>
+      
+      <div id="sim-panel-content" class="hidden pt-2 border-t border-slate-100 space-y-2">
+        <p class="text-[11px] text-slate-500 leading-snug">
+          Simulace naskenování QR kódu stanoviště v terénu:
+        </p>
+        <div class="grid grid-cols-6 gap-1" id="sim-buttons-grid">
+          <!-- buttons 1-12 rendered by JS -->
+        </div>
+        <div class="flex gap-2 pt-1">
+          <button onclick="openQrCodesGenerator()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-1.5 px-2 rounded-xl text-center transition">
+            <i class="fa-solid fa-qrcode mr-1"></i> QR kódy pro laser
+          </button>
+          <button onclick="resetAllGameData()" class="bg-rose-50 hover:bg-rose-100 text-brand-red font-bold py-1.5 px-3 rounded-xl text-center border border-rose-200 transition">
+            <i class="fa-solid fa-trash-can"></i> Reset zařízení
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER WITH ADMIN ACCESS LINK -->
+    <footer class="pt-6 pb-2 text-center text-xs text-slate-400 space-y-2">
+      <p class="text-[11px] leading-relaxed">
+        SVČ Helceletka – pobočka Fantázie Brno-Slatina<br>
+        Oslava 30 let Fantázie (1995–2025)
+      </p>
+      <div>
+        <button type="button" onclick="openAdminModal()" class="inline-flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-slate-600 transition px-2 py-1 rounded-lg">
+          <i class="fa-solid fa-lock text-[10px]"></i>
+          <span id="footer-admin-text">Správa hry (Organizátoři)</span>
+        </button>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- BOTTOM NAVIGATION BAR (STICKY) -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 py-1.5 shadow-lg">
+    <div class="max-w-xl mx-auto px-4 grid grid-cols-4 gap-1">
+      <button onclick="showTab('map')" id="nav-btn-map" class="nav-item active flex flex-col items-center py-1 text-brand-green font-bold transition">
+        <i class="fa-solid fa-map-location-dot text-lg"></i>
+        <span class="text-[10px] mt-0.5">Mapa</span>
+      </button>
+
+      <button onclick="showTab('stations')" id="nav-btn-stations" class="nav-item flex flex-col items-center py-1 text-slate-400 hover:text-slate-600 transition">
+        <i class="fa-solid fa-list-check text-lg"></i>
+        <span class="text-[10px] mt-0.5">Otázky</span>
+      </button>
+
+      <button onclick="showTab('puzzle')" id="nav-btn-puzzle" class="nav-item flex flex-col items-center py-1 text-slate-400 hover:text-slate-600 transition">
+        <div class="relative">
+          <i class="fa-solid fa-puzzle-piece text-lg"></i>
+          <span id="nav-puzzle-badge" class="absolute -top-1 -right-2 bg-brand-green text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+        </div>
+        <span class="text-[10px] mt-0.5">Logo</span>
+      </button>
+
+      <button onclick="showTab('reward')" id="nav-btn-reward" class="nav-item flex flex-col items-center py-1 text-slate-400 hover:text-slate-600 transition">
+        <div class="relative">
+          <i class="fa-solid fa-gift text-lg"></i>
+          <span id="nav-gift-pulse" class="hidden absolute -top-1 -right-2 w-2.5 h-2.5 bg-brand-red rounded-full animate-ping"></span>
+        </div>
+        <span class="text-[10px] mt-0.5">Dárek</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- HLAVNÍ AUTH MODAL: PŘIHLÁŠENÍ & REGISTRACE TÝMU (BLOKUJE HRU, DOKUD NENÍ TÝM AKTIVNÍ) -->
+  <div id="modal-auth" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-3.5 max-h-[92vh] overflow-y-auto">
+      
+      <!-- Logo a záhlaví -->
+      <div class="text-center space-y-1.5">
+        <div class="flex items-center justify-center gap-3">
+          <img src="logo_helceletka.jpg" alt="SVČ Helceletka" class="h-8 object-contain" />
+          <div class="w-8 h-8 bg-brand-green text-white rounded-lg flex items-center justify-center text-sm font-heading font-extrabold shadow-xs">
+            30
+          </div>
+        </div>
+        <h2 class="font-heading font-extrabold text-lg text-brand-dark leading-tight">
+          Výroční stezka Fantazie
+        </h2>
+        <p class="text-[11px] text-slate-500 leading-snug">
+          Přihlaste se ke svému týmu nebo zaregistrujte nový a vyrazte na trasu po Slatině.
+        </p>
+      </div>
+
+      <!-- Přepínač záložek: Nová registrace vs. Přihlášení -->
+      <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-xl text-xs font-bold text-slate-600 gap-1">
+        <button id="auth-tab-btn-register" type="button" onclick="switchAuthTab('register')" class="py-2 rounded-lg bg-white text-brand-green shadow-xs transition font-bold">
+          <i class="fa-solid fa-user-plus mr-1"></i> Nový tým
+        </button>
+        <button id="auth-tab-btn-login" type="button" onclick="switchAuthTab('login')" class="py-2 rounded-lg text-slate-600 hover:text-brand-dark transition font-semibold">
+          <i class="fa-solid fa-key mr-1"></i> Přihlásit se
+        </button>
+      </div>
+
+      <!-- FORMULÁŘ 1: REGISTRACE NOVÉHO TÝMU -->
+      <form id="auth-form-register" onsubmit="handleRegisterSubmit(event)" class="space-y-3 pt-1">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-flag text-brand-green mr-1"></i> Název nového týmu: *
+          </label>
+          <input type="text" id="auth-reg-name" required placeholder="Např. Slatinské veverky, Tým Tom a Elí" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-green font-semibold" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-key text-brand-yellow mr-1"></i> Zvolte tajné heslo týmu: *
+          </label>
+          <input type="text" id="auth-reg-password" required placeholder="Např. Kaštany, 1234, Veverka" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-green font-semibold" />
+          <p class="text-[10px] text-slate-400 mt-0.5">Heslo slouží pro ověření při vyzvednutí odměny a pro opětovné přihlášení.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              <i class="fa-solid fa-child text-brand-yellow mr-1"></i> Děti:
+            </label>
+            <input type="number" id="auth-reg-kids" min="0" max="30" value="1" required class="w-full px-3 py-1.5 text-center text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-green font-bold" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              <i class="fa-solid fa-user text-brand-green mr-1"></i> Dospělí:
+            </label>
+            <input type="number" id="auth-reg-adults" min="0" max="20" value="1" required class="w-full px-3 py-1.5 text-center text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-green font-bold" />
+          </div>
+        </div>
+
+        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-[11px] text-slate-600 leading-snug">
+          🎯 <b>Pravidla:</b> Čeká vás 12 stanovišť s úkoly. Špatnou odpověď můžete kdykoliv opravit. Pro získání narozeninového dárku a složení celého loga Fantazie musíte správně splnit <b>všech 12 stanovišť</b>!
+        </div>
+
+        <div id="auth-reg-error" class="hidden p-2.5 rounded-xl text-xs font-bold bg-rose-50 text-brand-red border border-rose-200"></div>
+
+        <button type="submit" class="w-full bg-brand-green hover:bg-brand-greenDark text-white font-bold py-2.5 px-4 rounded-xl shadow-xs active:scale-95 transition text-sm flex items-center justify-center gap-2">
+          <span>Zaregistrovat a začít hrát</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <!-- FORMULÁŘ 2: PŘIHLÁŠENÍ EXISTUJÍCÍHO TÝMU -->
+      <form id="auth-form-login" onsubmit="handleLoginSubmit(event)" class="space-y-3 pt-1 hidden">
+        <!-- Rychlý výběr z týmů již uložených na tomto zařízení -->
+        <div id="saved-teams-box" class="space-y-1.5">
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Týmy uložené na tomto zařízení:
+          </label>
+          <div id="saved-teams-list" class="max-h-32 overflow-y-auto space-y-1 pr-1">
+            <!-- Vykresleno v JS -->
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-flag text-brand-green mr-1"></i> Název týmu: *
+          </label>
+          <input type="text" id="auth-login-name" required placeholder="Zadejte název vašeho týmu" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-green font-semibold" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-key text-brand-yellow mr-1"></i> Tajné heslo týmu: *
+          </label>
+          <input type="text" id="auth-login-password" required placeholder="Zadejte heslo týmu" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-green font-semibold" />
+        </div>
+
+        <div id="auth-login-error" class="hidden p-2.5 rounded-xl text-xs font-bold bg-rose-50 text-brand-red border border-rose-200"></div>
+
+        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-4 rounded-xl shadow-xs active:scale-95 transition text-sm flex items-center justify-center gap-2">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          <span>Přihlásit se k týmu</span>
+        </button>
+
+        <p class="text-[11px] text-slate-500 text-center pt-1">
+          Ještě nemáte tým? 
+          <a href="#" onclick="switchAuthTab('register'); return false;" class="text-brand-green font-bold underline">Vytvořit nový tým</a>
+        </p>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- MODAL: SPRÁVA & ÚPRAVA AKTIVNÍHO TÝMU -->
+  <div id="modal-edit-team" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="font-heading font-bold text-lg text-brand-dark flex items-center gap-2">
+          <i class="fa-solid fa-id-card text-brand-green"></i> Správa aktivního týmu
+        </h3>
+        <button onclick="closeEditTeamModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleEditTeamSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Název týmu: *</label>
+          <input type="text" id="edit-input-name" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-green font-semibold" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Tajné heslo týmu: *</label>
+          <input type="text" id="edit-input-password" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-green font-semibold" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Počet dětí:</label>
+            <input type="number" id="edit-input-kids" min="0" max="30" value="1" required class="w-full px-3 py-2 text-center text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-green font-bold" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Dospělí:</label>
+            <input type="number" id="edit-input-adults" min="0" max="20" value="1" required class="w-full px-3 py-2 text-center text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-green font-bold" />
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-1">
+          <button type="submit" class="flex-1 bg-brand-green hover:bg-brand-greenDark text-white font-bold py-2 px-4 rounded-xl shadow-xs text-sm transition">
+            Uložit změny
+          </button>
+          <button type="button" onclick="closeEditTeamModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-3 rounded-xl text-sm transition">
+            Zavřít
+          </button>
+        </div>
+      </form>
+
+      <!-- ODHLÁŠENÍ & PŘEPNUTÍ TÝMU -->
+      <div class="pt-3 border-t border-slate-200 space-y-2">
+        <button type="button" onclick="closeEditTeamModal(); confirmLogoutTeam();" class="w-full text-xs bg-rose-50 hover:bg-rose-100 text-brand-red font-bold py-2.5 px-3 rounded-xl border border-rose-200 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          <span>Odhlásit tento tým ze zařízení</span>
+        </button>
+        <button type="button" onclick="closeEditTeamModal(); openAuthModal('register');" class="w-full text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold py-2 px-3 rounded-xl border border-slate-200 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-user-plus text-brand-green"></i>
+          <span>Registrovat nebo přihlásit jiný tým</span>
+        </button>
+        <p class="text-[10px] text-slate-400 text-center leading-tight">
+          Váš dosažený postup, vyřešená stanoviště i složené puzzle zůstávají bezpečně uloženy pod jménem týmu.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: NASTAVENÍ GOOGLE TABULKY / CLOUD SYNCHRONIZACE -->
+  <div id="modal-cloud-config" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="font-heading font-bold text-lg text-brand-dark flex items-center gap-2">
+          <i class="fa-solid fa-cloud text-emerald-600"></i> Google Tabulka
+        </h3>
+        <button onclick="closeCloudConfigModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-600 space-y-2 leading-relaxed">
+        <p>
+          Připojením Google Tabulky se všechny týmy automaticky ukládají <b>online do cloudu</b> a kolegyně může dostávat <b>upozornění na email</b>.
+        </p>
+        <div class="bg-emerald-50 text-emerald-950 p-3 rounded-2xl border border-emerald-200 space-y-1">
+          <p class="font-bold flex items-center gap-1.5 text-[11px]">
+            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+            <span id="cloud-status-text">Synchronizace je aktivní</span>
+          </p>
+          <p class="text-[10px] text-emerald-800" id="cloud-last-sync-text">Poslední odeslání: před chvílí</p>
+        </div>
+      </div>
+
+      <div id="cloud-player-info" class="text-xs text-slate-500 bg-slate-50 p-3 rounded-2xl border border-slate-200 leading-relaxed">
+        <i class="fa-solid fa-lock text-slate-400 mr-1"></i>
+        Tým je bezpečně propojen s tabulkou organizátorů. Administrátorská správa adresy skriptu je přístupná v režimu Správa hry.
+      </div>
+
+      <div id="cloud-admin-controls" class="hidden space-y-3">
+        <form onsubmit="handleCloudConfigSubmit(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              URL webové aplikace Google Apps Script:
+            </label>
+            <input type="url" id="cloud-input-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-green font-mono" />
+            <p class="text-[10px] text-slate-400 mt-1">
+              Kód skriptu pro Google Tabulku najdete v souboru <code>google_apps_script.js</code>.
+            </p>
+          </div>
+
+          <div class="flex gap-2 pt-1">
+            <button type="submit" class="flex-1 bg-brand-green hover:bg-brand-greenDark text-white font-bold py-2 px-3 rounded-xl shadow-xs text-xs transition">
+              Uložit URL
+            </button>
+            <button type="button" onclick="testCloudConnection()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-3 rounded-xl text-xs transition flex items-center gap-1">
+              <i class="fa-solid fa-rotate"></i> Otestovat
+            </button>
+          </div>
+        </form>
+
+        <div id="cloud-test-result" class="hidden p-2.5 rounded-xl text-xs font-bold"></div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-200">
+        <button type="button" onclick="manualSyncNow()" class="w-full text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold py-2 px-3 rounded-xl border border-emerald-200 transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Odeslat aktuální tým do tabulky teď</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DETAIL OTÁZKY / STANOVIŠTĚ -->
+  <div id="modal-station" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-5 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-start justify-between">
+        <div>
+          <span id="st-modal-badge" class="bg-brand-greenLight text-brand-green text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase border border-brand-green/20">
+            Stanoviště 1 / 12
+          </span>
+          <h3 id="st-modal-title" class="font-heading font-bold text-xl text-brand-dark mt-1 leading-snug">
+            Název stanoviště
+          </h3>
+        </div>
+        <button onclick="closeStationModal()" class="text-slate-400 hover:text-slate-600 text-xl p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- DESCRIPTION & QUESTION -->
+      <div class="space-y-2">
+        <p id="st-modal-desc" class="text-xs text-slate-500 italic">
+          Popis místa...
+        </p>
+        <div class="bg-emerald-50/50 p-3.5 rounded-2xl border border-brand-green/30">
+          <p class="text-xs font-black text-brand-green uppercase tracking-wider mb-1">Úkol / Otázka:</p>
+          <p id="st-modal-question" class="text-sm font-bold text-brand-dark">
+            Znění otázky?
+          </p>
+        </div>
+      </div>
+
+      <!-- OPTIONS OR TASK FORM -->
+      <div id="st-modal-interactive" class="space-y-2 pt-1">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- FEEDBACK MESSAGE -->
+      <div id="st-modal-feedback" class="hidden p-3 rounded-2xl text-xs font-bold"></div>
+
+      <!-- FOOTER ACTIONS -->
+      <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+        <a id="st-modal-nav-link" href="#" target="_blank" class="text-brand-green font-bold hover:underline flex items-center gap-1">
+          <i class="fa-solid fa-diamond-turn-right"></i> Navigovat na mapě
+        </a>
+        <button onclick="closeStationModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition">
+          Zavřít
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GENEROVÁNÍ QR KÓDŮ PRO LASER (POUZE PRO ADMIN) -->
+  <div id="modal-laser-qr" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-heading font-bold text-lg text-brand-dark flex items-center gap-2">
+          <i class="fa-solid fa-qrcode text-brand-dark"></i> QR kódy pro laser na stanoviště
+        </h3>
+        <button onclick="closeLaserModal()" class="text-slate-400 hover:text-slate-600 text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2 text-xs">
+        <label class="block font-bold text-slate-700">Cílová webová adresa (kam aplikaci nahrajete):</label>
+        <div class="flex gap-2">
+          <input type="url" id="qr-base-url-input" class="flex-1 px-3 py-1.5 text-xs rounded-xl border border-slate-300 font-mono focus:outline-none focus:ring-2 focus:ring-brand-green" />
+          <button onclick="regenerateLaserQrCodes()" class="bg-brand-green hover:bg-brand-greenDark text-white text-xs font-bold px-3 py-1.5 rounded-xl transition">
+            Aktualizovat
+          </button>
+        </div>
+        <p class="text-[10px] text-slate-500">
+          Například: <code>https://helceletka.cz/fantazie30/</code>. Všechny QR kódy níže se vygenerují s touto adresou.
+        </p>
+      </div>
+
+      <div class="space-y-3" id="qr-cards-container">
+        <!-- Generated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SPRÁVA HRY & ADMIN PŘIHLÁŠENÍ -->
+  <div id="modal-admin" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="font-heading font-bold text-lg text-brand-dark flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-brand-green"></i> Správa hry & Admin
+        </h3>
+        <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Pohled: PŘIHLÁŠENÍ (když není admin) -->
+      <div id="admin-login-view" class="space-y-3">
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Tato sekce je určena pouze pro organizátory hry ze SVČ Lužánky / Helceletka. Slouží k odemykání stanovišť, testování otázek a generování QR kódů.
+        </p>
+        <form onsubmit="handleAdminLoginSubmit(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Heslo správce:</label>
+            <input type="password" id="admin-password-input" placeholder="Zadejte heslo..." required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-green" />
+          </div>
+          <div id="admin-login-error" class="hidden text-xs text-brand-red font-bold bg-rose-50 p-2 rounded-xl border border-rose-200">
+            Nesprávné heslo pro administraci.
+          </div>
+          <button type="submit" class="w-full bg-brand-green hover:bg-brand-greenDark text-white font-bold py-2.5 rounded-xl shadow-xs text-xs transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-key"></i> Přihlásit se jako Admin
+          </button>
+        </form>
+      </div>
+
+      <!-- Pohled: AKTIVNÍ ADMIN -->
+      <div id="admin-active-view" class="hidden space-y-3">
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-amber-950 space-y-1">
+          <p class="font-bold flex items-center gap-1.5 text-amber-800">
+            <i class="fa-solid fa-circle-check text-amber-600"></i> Admin režim je aktivní
+          </p>
+          <p class="text-[11px] text-amber-900 leading-relaxed">
+            Můžete přímo z mapy i ze seznamu otevírat stanoviště kliknutím a testovat otázky i bez fyzického skenování QR kódu.
+          </p>
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <button onclick="closeAdminModal(); openQrCodesGenerator();" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-qrcode"></i> Zobrazit QR kódy pro laser
+          </button>
+          <button onclick="closeAdminModal(); openCloudConfigModal();" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-cloud"></i> Nastavení Google Tabulky
+          </button>
+          <button onclick="resetAllGameData()" class="w-full bg-rose-50 hover:bg-rose-100 text-brand-red font-bold py-2.5 px-3 rounded-xl text-xs border border-rose-200 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-trash-can"></i> Kompletní reset hry na tomto zařízení
+          </button>
+        </div>
+
+        <div class="pt-2 border-t border-slate-200">
+          <button onclick="logoutAdmin()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Odhlásit se z Admin režimu
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ZAMČENÉ STANOVIŠTĚ (PRO BĚŽNÉ HRÁČE) -->
+  <div id="modal-station-locked" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-start justify-between">
+        <div>
+          <span id="locked-modal-badge" class="bg-slate-100 text-slate-700 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase border border-slate-200">
+            Stanoviště #1
+          </span>
+          <h3 id="locked-modal-title" class="font-heading font-bold text-lg text-brand-dark mt-1 leading-snug">
+            Název stanoviště
+          </h3>
+          <p id="locked-modal-desc" class="text-xs text-slate-500 mt-0.5">
+            Popis místa
+          </p>
+        </div>
+        <button onclick="closeStationLockedModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="bg-amber-50 border border-amber-200/80 rounded-2xl p-3.5 space-y-2 text-xs text-amber-950">
+        <div class="flex items-center gap-2 font-bold text-amber-900">
+          <i class="fa-solid fa-lock text-amber-600 text-sm"></i>
+          <span>Otázka je zatím zamčená</span>
+        </div>
+        <p class="leading-relaxed text-[11px]">
+          Otázka a dílek do jubilejního loga se vám odemknou <b>naskenováním QR kódu na cedulce přímo na místě ve Slatině</b>!
+        </p>
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <a id="locked-modal-mapy-link" href="#" target="_blank" class="w-full bg-brand-green hover:bg-brand-greenDark text-white font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
+          <i class="fa-solid fa-location-arrow"></i> Navigovat na místo (Mapy.cz) ↗
+        </a>
+        <a id="locked-modal-gmaps-link" href="#" target="_blank" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-map-pin"></i> Google Mapy ↗
+        </a>
+        <button onclick="closeStationLockedModal()" class="w-full text-slate-500 hover:text-slate-700 py-1.5 text-xs font-semibold">
+          Zavřít
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING DRAG PROXY CONTAINER (POUZE BĚHEM TAŽENÍ) -->
+  <div id="drag-proxy" class="hidden"></div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // 12 STANOVIŠŤ VE SLATINĚ PRO 30 LET FANTAZIE
+    // 12 STANOVIŠŤ VE SLATINĚ PRO 30 LET FANTAZIE (OFICIÁLNÍ ZNĚNÍ)
+    const STATIONS_DATA = [
+      {
+        id: 1,
+        title: "Pobočka Fantázie",
+        lat: 49.1800753,
+        lng: 16.6803050,
+        desc: "Tilhonova 49 • Domov naší pobočky, kde to všechno před 30 lety začalo.",
+        question: "Jaký rok byla založena pobočka Fantázie?",
+        options: ["1966", "1996", "2006"],
+        correctIndex: 1,
+        fact: "Příběh se začal psát 21. listopadu 1996, kdy se na Tilhonově ulici 49 oficiálně otevřely dveře Fantázie, tehdy ještě pobočky Domu dětí a mládeže Junior. Se skromnou nabídkou několika kroužků jako je keramika, hudební výchova, výtvarka, turistika a jóga."
+      },
+      {
+        id: 2,
+        title: "Učebny Fantázie",
+        lat: 49.1772528,
+        lng: 16.6917161,
+        desc: "Prostory a klubovny pobočky Fantázie.",
+        question: "Kolik má SVČ Helceletka - pobočka Fantázie v současnosti učeben ve Slatině?",
+        options: ["5", "9", "2"],
+        correctIndex: 0,
+        fact: "Dvě učebny se nachází v přízemí, a to keramická dílna a velká klubovna. V prvním patře pak kuchyňka, výtvarná dílna a malá klubovna."
+      },
+      {
+        id: 3,
+        title: "Nabídka kroužků",
+        lat: 49.1760744,
+        lng: 16.6895458,
+        desc: "Pestrá nabídka volnočasových aktivit pro děti i mládež.",
+        question: "Kolik nabízí SVČ Helceletka - pobočka Fantázie ve školním roce 2026/2027 zájmových kroužků?",
+        options: ["65", "70", "82"],
+        correctIndex: 2,
+        fact: "V tomto školním roce 2026/2027 jsme otevřeli nově zájmové kroužky DIGI výtvarka s animací, umělecké kreslení nebo dívčí klub For Girls navržený přímo dětmi."
+      },
+      {
+        id: 4,
+        title: "Zahrada a jezírko",
+        lat: 49.1781458,
+        lng: 16.6891119,
+        desc: "Klidný kout naší zahrady s vodním jezírkem.",
+        question: "Jaké zvíře plave v jezírku na zahradě SVČ Helceletka - pobočka Fantázie?",
+        options: [
+          { text: "Karas zlatý", img: "image5.png" },
+          { text: "Kapr obecný", img: "image3.jpg" },
+          { text: "Kapr Koi", img: "image2.jpg" }
+        ],
+        correctIndex: 0,
+        fact: "Z naší přírodovědné pobočky Kamenačky jsme dostali dvě rybičky, které jsme pojmenovali Ferda a Ferda. Dnes v jezírku plavou desítky jejich potomků!"
+      },
+      {
+        id: 5,
+        title: "Keramická dílna",
+        lat: 49.1795894,
+        lng: 16.6854603,
+        desc: "Místo plné kreativity a tvoření z hlíny.",
+        question: "Kolik hlíny Fantázie spotřebuje na keramických kroužcích a výukových programech pro školy ve Slatině za jeden školní rok?",
+        options: ["800 kg", "1100 kg", "2500 kg"],
+        correctIndex: 1,
+        fact: "Než se hotový výrobek dostane k majiteli, musí projít dvěma výpaly v keramické peci. Tento proces může trvat až tři týdny. Teplota při prvním výpalu (přežahu) bývá kolem 970 °C a ostrý výpal na glazuru dosahuje až 1155 °C."
+      },
+      {
+        id: 6,
+        title: "Barvy na Fantázii",
+        lat: 49.1803011,
+        lng: 16.6853039,
+        desc: "Inspirativní prostředí pro tvorbu.",
+        question: "Jakou barvou je vymalována keramická učebna?",
+        options: ["Žlutou", "Zelenou", "Modrou"],
+        correctIndex: 1,
+        fact: "Zelená barva uklidňuje mysl, aniž by uspávala. Pomáhá udržet pozornost po delší dobu a podporuje schopnost vstřebávat nové informace a tvořit."
+      },
+      {
+        id: 7,
+        title: "Schody ve Fantázii",
+        lat: 49.1812458,
+        lng: 16.6803208,
+        desc: "Kroky nahoru a dolů v naší budově.",
+        question: "Kolik mají celkem na pobočce Fantázie schodů?",
+        options: ["56", "36", "76"],
+        correctIndex: 0,
+        fact: "Do celkového počtu schodů jsou započítány nejen schody do patra, ale také schody vedoucí na půdu, do sklepa i na dvůr Fantázie."
+      },
+      {
+        id: 8,
+        title: "Hřiště Černozemní",
+        lat: 49.1766108,
+        lng: 16.6829831,
+        desc: "Oblíbené sportoviště a dětské hřiště ve Slatině.",
+        question: "Jakou akci ve spolupráci s MČ Slatina pořádá SVČ Helceletka - pobočka Fantázie na hřišti Černozemní?",
+        options: ["Stezka sv. Martina", "Dětský den", "Pálení čarodějnic"],
+        correctIndex: 2,
+        fact: "V minulém školním roce splnilo čarodějné úkoly a stanoviště na Černozemní téměř 250 dětí!"
+      },
+      {
+        id: 9,
+        title: "Kde Fantázie působí",
+        lat: 49.1824611,
+        lng: 16.6745050,
+        desc: "Působnost Fantázie v Brně a okolí.",
+        question: "Ve které obci SVČ Helceletka - pobočka Fantázie nepůsobí?",
+        options: ["Podolí u Brna", "Šlapanice u Brna", "Mokrá - Horákov"],
+        correctIndex: 0,
+        fact: "Fantázie kromě kroužků ve Šlapanicích u Brna a v Mokré - Horákově má pravidelnou činnost taktéž na ZŠ Pohankova, ZŠ Holzova a ZŠ Rašínova."
+      },
+      {
+        id: 10,
+        title: "Kroužky s nápadem",
+        lat: 49.1802847,
+        lng: 16.6760486,
+        desc: "Objevování dovedností a řemesel.",
+        question: "Který z těchto kroužků na Fantázii najdete v nabídce?",
+        options: ["Malý kutil", "Baletní přípravka", "Robotika pro seniory"],
+        correctIndex: 0,
+        fact: "Kroužek Malý kutil boří staré předsudky! Šroubováky, pilky a kladívka už dávno nejsou jen klučičí záležitostí. Kroužek je mezi dětmi tak populární, že do dílny čím dál častěji a s obrovským nadšením míří i holky."
+      },
+      {
+        id: 11,
+        title: "Tábory Fantázie",
+        lat: 49.1777133,
+        lng: 16.6845622,
+        desc: "Léto plné dobrodružství a kamarádů.",
+        question: "Jaké dva hlavní typy táborů Fantázie každoročně pořádá?",
+        options: ["Jednodenní a příměstské", "Víkendové a pobytové", "Příměstské i pobytové"],
+        correctIndex: 2,
+        fact: "Máme za sebou neuvěřitelně úspěšný školní rok. Na Fantázii jsme zorganizovali celkem 16 táborů! Hvězdou sezóny se staly naše dva pobytové tábory, které trhaly rekordy v naplněnosti a vyprodaly se v rekordním čase."
+      },
+      {
+        id: 12,
+        title: "Vchody do Fantázie",
+        lat: 49.1769903,
+        lng: 16.6876289,
+        desc: "Jak k nám trefit ze slatinských ulic.",
+        question: "Z jakých ulic můžete vejít do budovy Fantázie ve Slatině?",
+        options: ["Tilhonova x Langrova", "Tilhonova x Vyškovská", "Tilhonova x Lučiny"],
+        correctIndex: 0,
+        fact: "U vchodu z ulice Langrova máme pro vás malou knihobudku, ze které si můžete kdykoliv půjčit nebo odnést knížky domů na čtení!"
+      }
+    ];
+
+    // MATEMATIKA A TOPOLOGIE PUZZLE SE ZÁMKY (4 SLOUPCE × 3 ŘÁDKY)
+    const BOARD_W = 1024;
+    const BOARD_H = 298;
+    const COLS = 4;
+    const ROWS = 3;
+    const PIECE_W = BOARD_W / COLS;
+    const PIECE_H = BOARD_H / ROWS;
+
+    const H_EDGES = [
+      [1, -1, 1, -1],  // Mezi řádkem 0 a 1
+      [-1, 1, -1, 1]   // Mezi řádkem 1 a 2
+    ];
+    const V_EDGES = [
+      [1, -1, 1],  // Řádek 0
+      [-1, 1, -1], // Řádek 1
+      [1, -1, 1]   // Řádek 2
+    ];
+
+    function getJigsawEdge(x0, y0, x1, y1, sign) {
+      if (sign === 0) return ` L ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+      const dx = x1 - x0, dy = y1 - y0;
+      const len = Math.hypot(dx, dy);
+      const ux = dx / len, uy = dy / len;
+      const nx = uy * sign, ny = -ux * sign;
+
+      const pA = { x: x0 + ux * len * 0.35, y: y0 + uy * len * 0.35 };
+
+      const c1x = x0 + (ux * 0.36 + nx * 0.05) * len;
+      const c1y = y0 + (uy * 0.36 + ny * 0.05) * len;
+      const c2x = x0 + (ux * 0.32 + nx * 0.16) * len;
+      const c2y = y0 + (uy * 0.32 + ny * 0.16) * len;
+      const pB = { x: x0 + (ux * 0.40 + nx * 0.20) * len, y: y0 + (uy * 0.40 + ny * 0.20) * len };
+
+      const c3x = x0 + (ux * 0.44 + nx * 0.24) * len;
+      const c3y = y0 + (uy * 0.44 + ny * 0.24) * len;
+      const c4x = x0 + (ux * 0.56 + nx * 0.24) * len;
+      const c4y = y0 + (uy * 0.56 + ny * 0.24) * len;
+      const pC = { x: x0 + (ux * 0.60 + nx * 0.20) * len, y: y0 + (uy * 0.60 + ny * 0.20) * len };
+
+      const c5x = x0 + (ux * 0.68 + nx * 0.16) * len;
+      const c5y = y0 + (uy * 0.68 + ny * 0.16) * len;
+      const c6x = x0 + (ux * 0.64 + nx * 0.05) * len;
+      const c6y = y0 + (uy * 0.64 + ny * 0.05) * len;
+      const pD = { x: x0 + ux * len * 0.65, y: y0 + uy * len * 0.65 };
+
+      return ` L ${pA.x.toFixed(1)} ${pA.y.toFixed(1)}` +
+             ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${pB.x.toFixed(1)} ${pB.y.toFixed(1)}` +
+             ` C ${c3x.toFixed(1)} ${c3y.toFixed(1)}, ${c4x.toFixed(1)} ${c4y.toFixed(1)}, ${pC.x.toFixed(1)} ${pC.y.toFixed(1)}` +
+             ` C ${c5x.toFixed(1)} ${c5y.toFixed(1)}, ${c6x.toFixed(1)} ${c6y.toFixed(1)}, ${pD.x.toFixed(1)} ${pD.y.toFixed(1)}` +
+             ` L ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+    }
+
+    function generatePiecePath(col, row) {
+      const x0 = col * PIECE_W, y0 = row * PIECE_H;
+      const x1 = (col + 1) * PIECE_W, y1 = (row + 1) * PIECE_H;
+
+      const topSign = row === 0 ? 0 : H_EDGES[row - 1][col];
+      const rightSign = col === COLS - 1 ? 0 : V_EDGES[row][col];
+      const bottomSign = row === ROWS - 1 ? 0 : -H_EDGES[row][col];
+      const leftSign = col === 0 ? 0 : -V_EDGES[row][col - 1];
+
+      let path = `M ${x0.toFixed(1)} ${y0.toFixed(1)}`;
+      path += getJigsawEdge(x0, y0, x1, y0, topSign);
+      path += getJigsawEdge(x1, y0, x1, y1, rightSign);
+      path += getJigsawEdge(x1, y1, x0, y1, bottomSign);
+      path += getJigsawEdge(x0, y1, x0, y0, leftSign);
+      path += ' Z';
+      return path;
+    }
+
+    const JIGSAW_PATHS = {};
+    for (let id = 1; id <= 12; id++) {
+      const col = (id - 1) % COLS;
+      const row = Math.floor((id - 1) / COLS);
+      JIGSAW_PATHS[id] = generatePiecePath(col, row);
+    }
+
+    function playSnapSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.08);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.36);
+      } catch (e) {}
+    }
+
+    function playWrongSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(260, now);
+        osc.frequency.exponentialRampToValueAtTime(180, now + 0.18);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.start(now);
+        osc.stop(now + 0.23);
+      } catch (e) {}
+    }
+
+    // STORAGE KEYS & MULTI-TEAM MODEL
+    const STORAGE_TEAMS_KEY = "fantazie30_teams_db_v2";
+    const STORAGE_ACTIVE_TEAM_KEY = "fantazie30_active_team_id_v2";
+    const STORAGE_CLOUD_URL_KEY = "fantazie30_cloud_sheet_url_v1";
+    const LEGACY_STORAGE_KEY = "fantazie30_game_state_v5";
+
+    // ADMIN AUTHENTICATION & RESTRICTIONS (heslo Fantoska30@)
+    const ADMIN_PASSWORD = "Fantoska30@";
+    let isAdmin = sessionStorage.getItem("fantazie30_admin") === "true";
+
+    // Výchozí URL skriptu pro Google Tabulku (lze upravit přímo zde nebo v nastavení aplikace)
+    const DEFAULT_CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbxPIqjDt_UQHXCfQ2cLb08WSjU-C9Z62OGH0WlQTN30IDu0jMx_OQai4FRM9l3O7XKFAg/exec";
+    let cloudApiUrl = localStorage.getItem(STORAGE_CLOUD_URL_KEY) || DEFAULT_CLOUD_API_URL;
+    let cloudSyncInProgress = false;
+    let lastCloudSyncTime = null;
+
+    let teamsDatabase = {};
+    let activeTeamId = null;
+
+    const emptyTeamTemplate = () => ({
+      id: "",
+      teamName: "",
+      password: "",
+      kidsCount: 1,
+      adultsCount: 1,
+      visited: {},
+      placedPieces: [],
+      uniqueCode: ""
+    });
+
+    let gameState = emptyTeamTemplate();
+
+    let leafletMap = null;
+    let markers = {};
+    let activeStationId = null;
+    let selectedTrayPieceId = null;
+
+    function normalizeTeamName(name) {
+      return (name || "").trim().toLowerCase();
+    }
+
+    function formatTeamSummary(name, kids, adults) {
+      if (!name) return "Nepřihlášeno";
+      const parts = [];
+      const k = parseInt(kids || 0, 10);
+      const a = parseInt(adults || 0, 10);
+
+      if (k === 1) parts.push("1 dítě");
+      else if (k >= 2 && k <= 4) parts.push(`${k} děti`);
+      else if (k > 4) parts.push(`${k} dětí`);
+
+      if (a === 1) parts.push("1 dospělý");
+      else if (a >= 2 && a <= 4) parts.push(`${a} dospělí`);
+      else if (a > 4) parts.push(`${a} dospělých`);
+
+      return parts.length ? `${name} • ${parts.join(", ")}` : name;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initPuzzleDefs();
+      loadStorageData();
+      initMap();
+      renderStationsList();
+      renderPuzzleBoard();
+      renderPuzzleTray();
+      renderSimButtons();
+      updateStats();
+      setCloudIconState(cloudApiUrl ? "synced" : "offline");
+      updateAdminUI();
+
+      if (!activeTeamId || !gameState.teamName) {
+        openAuthModal('register');
+      } else {
+        closeAuthModal();
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const stationParam = urlParams.get('stanoviste') || urlParams.get('bod') || urlParams.get('station');
+      if (stationParam) {
+        const targetId = parseInt(stationParam, 10);
+        if (targetId >= 1 && targetId <= 12) {
+          sessionStorage.setItem("fantazie30_pending_station", String(targetId));
+          setTimeout(() => {
+            if (activeTeamId && gameState.teamName) {
+              sessionStorage.removeItem("fantazie30_pending_station");
+              openStationModal(targetId);
+            }
+          }, 450);
+        }
+      }
+    });
+
+    function initPuzzleDefs() {
+      const defs = document.getElementById('puzzle-defs');
+      if (!defs) return;
+      defs.innerHTML = "";
+
+      for (let id = 1; id <= 12; id++) {
+        const clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+        clipPath.setAttribute("id", `puzzle-clip-${id}`);
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", JIGSAW_PATHS[id]);
+        clipPath.appendChild(path);
+        defs.appendChild(clipPath);
+      }
+    }
+
+    function loadStorageData() {
+      try {
+        const savedDb = localStorage.getItem(STORAGE_TEAMS_KEY);
+        if (savedDb) {
+          teamsDatabase = JSON.parse(savedDb);
+        }
+      } catch (e) {
+        console.error("Chyba při čtení databáze týmů:", e);
+      }
+
+      if (Object.keys(teamsDatabase).length === 0) {
+        try {
+          const legacyState = localStorage.getItem(LEGACY_STORAGE_KEY);
+          if (legacyState) {
+            const parsed = JSON.parse(legacyState);
+            if (parsed.teamName) {
+              const legacyId = "team_" + Date.now();
+              teamsDatabase[legacyId] = {
+                id: legacyId,
+                teamName: parsed.teamName,
+                password: parsed.password || "1234",
+                kidsCount: parsed.kidsCount || 1,
+                adultsCount: parsed.adultsCount || 1,
+                visited: parsed.visited || {},
+                placedPieces: parsed.placedPieces || [],
+                uniqueCode: parsed.uniqueCode || ("FAN30-" + Math.random().toString(36).substring(2, 6).toUpperCase())
+              };
+              localStorage.setItem(STORAGE_TEAMS_KEY, JSON.stringify(teamsDatabase));
+              localStorage.setItem(STORAGE_ACTIVE_TEAM_KEY, legacyId);
+            }
+          }
+        } catch (e) {
+          console.error("Chyba při migraci legacy stavu:", e);
+        }
+      }
+
+      activeTeamId = localStorage.getItem(STORAGE_ACTIVE_TEAM_KEY) || null;
+
+      if (activeTeamId && teamsDatabase[activeTeamId]) {
+        applyActiveTeam(activeTeamId);
+      } else {
+        applyLoggedOutState();
+      }
+    }
+
+    function saveTeamsDb(shouldSyncCloud = true) {
+      try {
+        if (activeTeamId && teamsDatabase[activeTeamId]) {
+          teamsDatabase[activeTeamId] = {
+            ...teamsDatabase[activeTeamId],
+            teamName: gameState.teamName,
+            password: gameState.password,
+            kidsCount: gameState.kidsCount,
+            adultsCount: gameState.adultsCount,
+            visited: gameState.visited,
+            placedPieces: gameState.placedPieces,
+            uniqueCode: gameState.uniqueCode,
+            updatedAt: new Date().toISOString()
+          };
+        }
+        localStorage.setItem(STORAGE_TEAMS_KEY, JSON.stringify(teamsDatabase));
+        if (activeTeamId) {
+          localStorage.setItem(STORAGE_ACTIVE_TEAM_KEY, activeTeamId);
+        } else {
+          localStorage.removeItem(STORAGE_ACTIVE_TEAM_KEY);
+        }
+
+        if (shouldSyncCloud && activeTeamId && teamsDatabase[activeTeamId]) {
+          debouncedCloudSync(teamsDatabase[activeTeamId]);
+        }
+      } catch (e) {
+        console.error("Chyba při ukládání týmů:", e);
+      }
+    }
+
+    function saveState() {
+      saveTeamsDb(true);
+    }
+
+    // CLOUD SYNCHRONIZATION VIA GOOGLE APPS SCRIPT / SHEETS
+    let syncDebounceTimer = null;
+    function debouncedCloudSync(teamData) {
+      if (!cloudApiUrl) return;
+      clearTimeout(syncDebounceTimer);
+      syncDebounceTimer = setTimeout(() => {
+        syncTeamProgressToCloud(teamData);
+      }, 1500);
+    }
+
+    async function syncTeamProgressToCloud(teamData) {
+      if (!cloudApiUrl || !teamData || cloudSyncInProgress) return;
+      setCloudIconState("syncing");
+      cloudSyncInProgress = true;
+
+      try {
+        const payload = {
+          action: "syncProgress",
+          team: teamData
+        };
+
+        const res = await fetch(cloudApiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data && data.success) {
+          lastCloudSyncTime = new Date();
+          setCloudIconState("synced");
+          updateCloudModalStatus();
+        } else {
+          setCloudIconState("error");
+        }
+      } catch (err) {
+        console.warn("Chyba při cloud synchronizaci (offline provoz pokračuje):", err);
+        setCloudIconState("offline");
+      } finally {
+        cloudSyncInProgress = false;
+      }
+    }
+
+    function setCloudIconState(state) {
+      const icon = document.getElementById("cloud-icon");
+      const btn = document.getElementById("btn-cloud-status");
+      if (!icon || !btn) return;
+
+      if (!cloudApiUrl) {
+        icon.className = "fa-solid fa-cloud text-[11px] text-white/50";
+        btn.title = "Google Tabulka: nepřipojeno (klikněte pro nastavení)";
+        return;
+      }
+
+      if (state === "syncing") {
+        icon.className = "fa-solid fa-cloud-arrow-up text-[11px] text-amber-300 animate-pulse";
+        btn.title = "Ukládám do Google Tabulky...";
+      } else if (state === "synced") {
+        icon.className = "fa-solid fa-cloud-check text-[11px] text-emerald-300";
+        btn.title = "Synchronizováno s Google Tabulkou ✓";
+      } else if (state === "error" || state === "offline") {
+        icon.className = "fa-solid fa-cloud text-[11px] text-rose-300";
+        btn.title = "Google Tabulka offline / chyba spojení (hra funguje dál)";
+      }
+    }
+
+    function openCloudConfigModal() {
+      const input = document.getElementById("cloud-input-url");
+      if (input) input.value = cloudApiUrl;
+      updateCloudModalStatus();
+
+      const adminControls = document.getElementById("cloud-admin-controls");
+      const playerInfo = document.getElementById("cloud-player-info");
+      if (adminControls && playerInfo) {
+        if (isAdmin) {
+          adminControls.classList.remove("hidden");
+          playerInfo.classList.add("hidden");
+        } else {
+          adminControls.classList.add("hidden");
+          playerInfo.classList.remove("hidden");
+        }
+      }
+
+      document.getElementById("cloud-test-result").classList.add("hidden");
+      document.getElementById("modal-cloud-config").classList.remove("hidden");
+    }
+
+    function closeCloudConfigModal() {
+      document.getElementById("modal-cloud-config").classList.add("hidden");
+    }
+
+    function updateCloudModalStatus() {
+      const statusText = document.getElementById("cloud-status-text");
+      const lastSyncText = document.getElementById("cloud-last-sync-text");
+      if (!statusText) return;
+
+      if (!cloudApiUrl) {
+        statusText.textContent = "Google Tabulka zatím není nastavena";
+        statusText.className = "text-amber-800 font-bold";
+        lastSyncText.textContent = "Zadejte URL Apps Scriptu níže pro aktivaci online ukládání.";
+      } else {
+        statusText.textContent = "Centrální synchronizace je aktivní";
+        statusText.className = "text-emerald-800 font-bold";
+        if (lastCloudSyncTime) {
+          lastSyncText.textContent = "Poslední online uložení: " + lastCloudSyncTime.toLocaleTimeString("cs-CZ");
+        } else {
+          lastSyncText.textContent = "Připraveno odesílat výsledky.";
+        }
+      }
+    }
+
+    function handleCloudConfigSubmit(e) {
+      e.preventDefault();
+      if (!isAdmin) {
+        openAdminModal();
+        return;
+      }
+      const input = document.getElementById("cloud-input-url");
+      const val = input.value.trim();
+      cloudApiUrl = val;
+      localStorage.setItem(STORAGE_CLOUD_URL_KEY, val);
+      updateCloudModalStatus();
+      setCloudIconState(val ? "synced" : "offline");
+
+      const resBox = document.getElementById("cloud-test-result");
+      resBox.className = "p-2.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 block";
+      resBox.textContent = "URL adresa byla uložena!";
+
+      if (val && activeTeamId && teamsDatabase[activeTeamId]) {
+        syncTeamProgressToCloud(teamsDatabase[activeTeamId]);
+      }
+    }
+
+    async function testCloudConnection() {
+      const resBox = document.getElementById("cloud-test-result");
+      const input = document.getElementById("cloud-input-url");
+      const url = input.value.trim() || cloudApiUrl;
+
+      if (!url) {
+        resBox.className = "p-2.5 rounded-xl text-xs font-bold bg-rose-50 text-brand-red border border-rose-200 block";
+        resBox.textContent = "Nejprve vyplňte URL adresu webové aplikace Apps Script.";
+        return;
+      }
+
+      resBox.className = "p-2.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 block";
+      resBox.textContent = "Testuji spojení s Google Tabulkou...";
+
+      try {
+        const res = await fetch(`${url}?action=testConnection`, { method: "GET" });
+        const data = await res.json();
+        if (data && data.success) {
+          resBox.className = "p-2.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 block";
+          resBox.innerHTML = "✅ Spojení s Google Tabulkou je funkční! " + (data.message || "");
+        } else {
+          resBox.className = "p-2.5 rounded-xl text-xs font-bold bg-rose-50 text-brand-red border border-rose-200 block";
+          resBox.textContent = "Chyba: " + (data.error || "Neznámá odpověď");
+        }
+      } catch (err) {
+        resBox.className = "p-2.5 rounded-xl text-xs font-bold bg-rose-50 text-brand-red border border-rose-200 block";
+        resBox.textContent = "Nepodařilo se připojit k zadané URL. Zkontrolujte, zda je skript nasazen jako Web App s přístupem 'Kdokoli' (Anyone).";
+      }
+    }
+
+    function manualSyncNow() {
+      if (!cloudApiUrl) {
+        alert("Nejprve zadejte a uložte URL Google Apps Scriptu.");
+        return;
+      }
+      if (!activeTeamId || !teamsDatabase[activeTeamId]) {
+        alert("Zatím není přihlášen žádný aktivní tým.");
+        return;
+      }
+      syncTeamProgressToCloud(teamsDatabase[activeTeamId]);
+      alert("Tým byl odeslán do Google Tabulky!");
+    }
+
+    function applyActiveTeam(teamId) {
+      activeTeamId = teamId;
+      const team = teamsDatabase[teamId];
+      if (!team) return;
+
+      gameState = {
+        id: team.id,
+        teamName: team.teamName,
+        password: team.password,
+        kidsCount: team.kidsCount,
+        adultsCount: team.adultsCount,
+        visited: team.visited || {},
+        placedPieces: team.placedPieces || [],
+        uniqueCode: team.uniqueCode || ("FAN30-" + Math.random().toString(36).substring(2, 6).toUpperCase())
+      };
+
+      const summary = formatTeamSummary(gameState.teamName, gameState.kidsCount, gameState.adultsCount);
+      document.getElementById("header-team-name").textContent = gameState.teamName;
+      document.getElementById("header-team-indicator").className = "w-2 h-2 rounded-full bg-emerald-300";
+      document.getElementById("btn-header-logout").classList.remove("hidden");
+      
+      document.getElementById("current-team-display").textContent = summary;
+      document.getElementById("team-info-avatar").className = "w-9 h-9 rounded-xl bg-brand-green text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0";
+      document.getElementById("btn-banner-logout").classList.remove("hidden");
+
+      document.getElementById("edit-input-name").value = gameState.teamName;
+      document.getElementById("edit-input-password").value = gameState.password || "";
+      document.getElementById("edit-input-kids").value = gameState.kidsCount || 1;
+      document.getElementById("edit-input-adults").value = gameState.adultsCount || 1;
+
+      renderSavedTeamsList();
+      renderStationsList();
+      renderPuzzleBoard();
+      renderPuzzleTray();
+      updateMapMarkers();
+      updateStats();
+
+      // Pokud hráč naskenoval QR kód ještě před přihlášením/registrací, po aktivaci týmu ho rovnou otevřeme!
+      const pending = sessionStorage.getItem("fantazie30_pending_station");
+      if (pending) {
+        sessionStorage.removeItem("fantazie30_pending_station");
+        const pendingId = parseInt(pending, 10);
+        if (pendingId >= 1 && pendingId <= 12) {
+          setTimeout(() => {
+            openStationModal(pendingId);
+          }, 350);
+        }
+      }
+    }
+
+    function applyLoggedOutState() {
+      activeTeamId = null;
+      gameState = emptyTeamTemplate();
+
+      document.getElementById("header-team-name").textContent = "Přihlásit";
+      document.getElementById("header-team-indicator").className = "w-2 h-2 rounded-full bg-white/40";
+      document.getElementById("btn-header-logout").classList.add("hidden");
+
+      document.getElementById("current-team-display").textContent = "Nepřihlášeno";
+      document.getElementById("team-info-avatar").className = "w-9 h-9 rounded-xl bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm shrink-0";
+      document.getElementById("btn-banner-logout").classList.add("hidden");
+
+      selectedTrayPieceId = null;
+
+      renderSavedTeamsList();
+      renderStationsList();
+      renderPuzzleBoard();
+      renderPuzzleTray();
+      updateMapMarkers();
+      updateStats();
+    }
+
+    function switchAuthTab(tab) {
+      const regBtn = document.getElementById('auth-tab-btn-register');
+      const loginBtn = document.getElementById('auth-tab-btn-login');
+      const regForm = document.getElementById('auth-form-register');
+      const loginForm = document.getElementById('auth-form-login');
+
+      document.getElementById('auth-reg-error').classList.add('hidden');
+      document.getElementById('auth-login-error').classList.add('hidden');
+
+      if (tab === 'register') {
+        regBtn.className = "py-2 rounded-lg bg-white text-brand-green shadow-xs transition font-bold";
+        loginBtn.className = "py-2 rounded-lg text-slate-600 hover:text-brand-dark transition font-semibold";
+        regForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+        document.getElementById('auth-reg-name').focus();
+      } else {
+        loginBtn.className = "py-2 rounded-lg bg-white text-brand-green shadow-xs transition font-bold";
+        regBtn.className = "py-2 rounded-lg text-slate-600 hover:text-brand-dark transition font-semibold";
+        loginForm.classList.remove('hidden');
+        regForm.classList.add('hidden');
+        renderSavedTeamsList();
+        document.getElementById('auth-login-name').focus();
+      }
+    }
+
+    function openAuthModal(defaultTab = 'register') {
+      const modal = document.getElementById('modal-auth');
+      modal.classList.remove('hidden');
+      
+      const hasTeams = Object.keys(teamsDatabase).length > 0;
+      if (defaultTab === 'login' || (!activeTeamId && hasTeams && defaultTab !== 'register')) {
+        switchAuthTab('login');
+      } else {
+        switchAuthTab('register');
+      }
+    }
+
+    function closeAuthModal() {
+      document.getElementById('modal-auth').classList.add('hidden');
+    }
+
+    function renderSavedTeamsList() {
+      const container = document.getElementById('saved-teams-list');
+      const box = document.getElementById('saved-teams-box');
+      if (!container) return;
+
+      const teamKeys = Object.keys(teamsDatabase);
+      if (teamKeys.length === 0) {
+        box.classList.add('hidden');
+        return;
+      }
+
+      box.classList.remove('hidden');
+      container.innerHTML = "";
+
+      teamKeys.forEach(key => {
+        const t = teamsDatabase[key];
+        const isCurrent = (key === activeTeamId);
+        
+        let solvedCount = 0;
+        if (t.visited) {
+          for (const sId in t.visited) {
+            if (t.visited[sId]?.correct) solvedCount++;
+          }
+        }
+
+        const item = document.createElement('div');
+        item.className = `p-2 rounded-xl border text-xs flex items-center justify-between cursor-pointer transition ${isCurrent ? 'bg-brand-greenLight/50 border-brand-green' : 'bg-slate-50 hover:bg-slate-100 border-slate-200'}`;
+        item.onclick = () => {
+          document.getElementById('auth-login-name').value = t.teamName;
+          document.getElementById('auth-login-password').value = "";
+          document.getElementById('auth-login-password').focus();
+        };
+
+        item.innerHTML = `
+          <div class="truncate">
+            <b class="text-brand-dark text-xs block truncate">${t.teamName}</b>
+            <span class="text-[10px] text-slate-500 font-medium">Správně: ${solvedCount}/12 stanovišť</span>
+          </div>
+          <button type="button" class="text-[11px] text-brand-green font-bold px-2 py-0.5 rounded-lg bg-white border border-brand-green/30 hover:bg-brand-green hover:text-white transition shrink-0 ml-2">
+            Vybrat
+          </button>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    async function handleRegisterSubmit(e) {
+      e.preventDefault();
+      const errBox = document.getElementById('auth-reg-error');
+      errBox.classList.add('hidden');
+
+      const name = document.getElementById('auth-reg-name').value.trim();
+      const password = document.getElementById('auth-reg-password').value.trim();
+      const kids = parseInt(document.getElementById('auth-reg-kids').value, 10) || 0;
+      const adults = parseInt(document.getElementById('auth-reg-adults').value, 10) || 0;
+
+      if (!name || !password) {
+        errBox.textContent = "Vyplňte prosím název týmu i tajné heslo.";
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      const normName = normalizeTeamName(name);
+      const existingId = Object.keys(teamsDatabase).find(id => normalizeTeamName(teamsDatabase[id].teamName) === normName);
+
+      if (existingId) {
+        errBox.innerHTML = `Tým s názvem <b>${name}</b> již na tomto zařízení existuje. <a href="#" onclick="document.getElementById('auth-login-name').value='${name}'; switchAuthTab('login'); return false;" class="underline font-black">Přihlaste se k němu zde</a> nebo zvolte jiný název.`;
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      const newId = "team_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6);
+      const newTeamObj = {
+        id: newId,
+        teamName: name,
+        password: password,
+        kidsCount: kids,
+        adultsCount: adults,
+        visited: {},
+        placedPieces: [],
+        uniqueCode: "FAN30-" + Math.random().toString(36).substring(2, 6).toUpperCase(),
+        createdAt: new Date().toISOString()
+      };
+
+      // Pokud je nastaven Cloud, zkusíme registrovat i centrálně do Google Tabulky
+      if (cloudApiUrl) {
+        try {
+          const submitBtn = e.target.querySelector('button[type="submit"]');
+          const originalText = submitBtn.innerHTML;
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Ukládám do Google Tabulky...`;
+
+          const cloudRes = await fetch(cloudApiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "register", team: newTeamObj })
+          });
+          const cloudData = await cloudRes.json();
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+
+          if (cloudData && !cloudData.success) {
+            errBox.textContent = cloudData.error || "Chyba při online registraci týmu.";
+            errBox.classList.remove('hidden');
+            return;
+          }
+        } catch (cloudErr) {
+          console.warn("Registrace v cloudu selhala, pokračuji lokálně:", cloudErr);
+        }
+      }
+
+      teamsDatabase[newId] = newTeamObj;
+      saveTeamsDb(false);
+      applyActiveTeam(newId);
+      closeAuthModal();
+
+      confetti({
+        particleCount: 50,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const errBox = document.getElementById('auth-login-error');
+      errBox.classList.add('hidden');
+
+      const name = document.getElementById('auth-login-name').value.trim();
+      const password = document.getElementById('auth-login-password').value.trim();
+
+      if (!name || !password) {
+        errBox.textContent = "Zadejte prosím název týmu i heslo.";
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      const normName = normalizeTeamName(name);
+      let foundId = Object.keys(teamsDatabase).find(id => normalizeTeamName(teamsDatabase[id].teamName) === normName);
+
+      // Pokud tým na tomto zařízení zatím není uložen, zkusíme ho stáhnout z Google Tabulky!
+      if (!foundId && cloudApiUrl) {
+        try {
+          const submitBtn = e.target.querySelector('button[type="submit"]');
+          const originalText = submitBtn.innerHTML;
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Ověřuji v Google Tabulce...`;
+
+          const cloudRes = await fetch(cloudApiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "login", teamName: name, password: password })
+          });
+          const cloudData = await cloudRes.json();
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+
+          if (cloudData && cloudData.success && cloudData.team) {
+            const fetchedTeam = cloudData.team;
+            foundId = fetchedTeam.id || ("team_" + Date.now());
+            teamsDatabase[foundId] = fetchedTeam;
+            saveTeamsDb(false);
+          } else if (cloudData && !cloudData.success) {
+            errBox.textContent = cloudData.error || "Přihlášení se nezdařilo.";
+            errBox.classList.remove('hidden');
+            return;
+          }
+        } catch (cloudErr) {
+          console.warn("Chyba při online vyhledání týmu:", cloudErr);
+        }
+      }
+
+      if (!foundId) {
+        errBox.innerHTML = `Tým s názvem <b>${name}</b> nebyl nalezen. Můžete jej <a href="#" onclick="document.getElementById('auth-reg-name').value='${name}'; switchAuthTab('register'); return false;" class="underline font-black">zaregistrovat jako nový</a>.`;
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      const targetTeam = teamsDatabase[foundId];
+      if (targetTeam.password.trim() !== password.trim()) {
+        errBox.textContent = "Zadané tajné heslo nesouhlasí. Zkuste to prosím znovu.";
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      applyActiveTeam(foundId);
+      saveTeamsDb(false);
+      closeAuthModal();
+
+      confetti({
+        particleCount: 35,
+        spread: 50,
+        origin: { y: 0.6 }
+      });
+    }
+
+    function confirmLogoutTeam() {
+      if (!gameState.teamName) {
+        openAuthModal('login');
+        return;
+      }
+
+      const teamName = gameState.teamName;
+      const message = `Opravdu chcete odhlásit tým "${teamName}" z tohoto zařízení?\n\nVeškerý váš postup, získané body i složené dílky zůstávají bezpečně uloženy a můžete se k nim kdykoliv znovu přihlásit jménem a heslem.`;
+
+      if (confirm(message)) {
+        saveTeamsDb();
+        applyLoggedOutState();
+        openAuthModal('login');
+      }
+    }
+
+    function openEditTeamModal() {
+      if (!activeTeamId || !gameState.teamName) {
+        openAuthModal('register');
+        return;
+      }
+      document.getElementById('modal-edit-team').classList.remove('hidden');
+    }
+
+    function closeEditTeamModal() {
+      document.getElementById('modal-edit-team').classList.add('hidden');
+    }
+
+    function handleEditTeamSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('edit-input-name').value.trim();
+      const password = document.getElementById('edit-input-password').value.trim();
+      const kids = parseInt(document.getElementById('edit-input-kids').value, 10) || 0;
+      const adults = parseInt(document.getElementById('edit-input-adults').value, 10) || 0;
+
+      if (!name || !password) return;
+
+      gameState.teamName = name;
+      gameState.password = password;
+      gameState.kidsCount = kids;
+      gameState.adultsCount = adults;
+
+      saveState();
+      applyActiveTeam(activeTeamId);
+      closeEditTeamModal();
+    }
+
+    function getCollectedPieces() {
+      const collected = [];
+      for (let i = 1; i <= 12; i++) {
+        if (gameState.visited[i]?.correct) {
+          collected.push(i);
+        }
+      }
+      return collected;
+    }
+
+    function getUnplacedPieces() {
+      const collected = getCollectedPieces();
+      const unplaced = collected.filter(id => !gameState.placedPieces.includes(id));
+      // Zamíchání pořadí dílků v batohu, aby nešly podle čísel 1, 2, 3...
+      // Použijeme stabilní pseudo-náhodu založenou na id týmu, aby při každém překreslení neskákaly
+      const seed = (gameState.teamName || "fantazie").split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 42);
+      return unplaced.sort((a, b) => {
+        const hashA = (a * 9301 + 49297 + seed) % 233280;
+        const hashB = (b * 9301 + 49297 + seed) % 233280;
+        return hashA - hashB;
+      });
+    }
+
+    function renderPuzzleBoard() {
+      const gridG = document.getElementById('board-slots-grid');
+      const placedG = document.getElementById('board-placed-layer');
+      const clickG = document.getElementById('board-click-hitboxes');
+      const statusEl = document.getElementById('puzzle-board-status');
+      const completedBox = document.getElementById('puzzle-completed-box');
+      if (!gridG || !placedG) return;
+
+      gridG.innerHTML = "";
+      placedG.innerHTML = "";
+      clickG.innerHTML = "";
+
+      const placedCount = gameState.placedPieces.length;
+      statusEl.textContent = `Složeno: ${placedCount} / 12`;
+
+      for (let id = 1; id <= 12; id++) {
+        const col = (id - 1) % COLS;
+        const row = Math.floor((id - 1) / COLS);
+        const isPlaced = gameState.placedPieces.includes(id);
+
+        const cx = (col + 0.5) * PIECE_W;
+        const cy = (row + 0.5) * PIECE_H;
+
+        if (isPlaced) {
+          const pieceG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          pieceG.setAttribute("id", `placed-piece-${id}`);
+
+          const img = document.createElementNS("http://www.w3.org/2000/svg", "image");
+          img.setAttribute("href", "logo_fantazie.png");
+          img.setAttribute("width", BOARD_W);
+          img.setAttribute("height", BOARD_H);
+          img.setAttribute("clip-path", `url(#puzzle-clip-${id})`);
+
+          const borderPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          borderPath.setAttribute("d", JIGSAW_PATHS[id]);
+          borderPath.setAttribute("fill", "none");
+          borderPath.setAttribute("stroke", "rgba(118, 172, 51, 0.4)");
+          borderPath.setAttribute("stroke-width", "1.2");
+
+          pieceG.appendChild(img);
+          pieceG.appendChild(borderPath);
+          placedG.appendChild(pieceG);
+        } else {
+          const slotPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          slotPath.setAttribute("id", `empty-slot-path-${id}`);
+          slotPath.setAttribute("d", JIGSAW_PATHS[id]);
+          slotPath.setAttribute("fill", "#f1f5f9");
+          slotPath.setAttribute("stroke", "#cbd5e1");
+          slotPath.setAttribute("stroke-width", "1.5");
+          slotPath.setAttribute("stroke-dasharray", "3,3");
+
+          gridG.appendChild(slotPath);
+
+          const hitbox = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          hitbox.setAttribute("x", (col * PIECE_W).toFixed(1));
+          hitbox.setAttribute("y", (row * PIECE_H).toFixed(1));
+          hitbox.setAttribute("width", PIECE_W.toFixed(1));
+          hitbox.setAttribute("height", PIECE_H.toFixed(1));
+          hitbox.setAttribute("fill", "transparent");
+          hitbox.setAttribute("cursor", "pointer");
+          hitbox.onclick = () => handleSlotTap(id);
+          clickG.appendChild(hitbox);
+        }
+      }
+
+      if (placedCount === 12) {
+        completedBox.classList.remove('hidden');
+      } else {
+        completedBox.classList.add('hidden');
+      }
+    }
+
+    function getPieceLocalBox(pieceId) {
+      const col = (pieceId - 1) % COLS;
+      const row = Math.floor((pieceId - 1) / COLS);
+      const padX = 35;
+      const padY = 28;
+      const minX = Math.max(0, col * PIECE_W - padX);
+      const minY = Math.max(0, row * PIECE_H - padY);
+      const maxX = Math.min(BOARD_W, (col + 1) * PIECE_W + padX);
+      const maxY = Math.min(BOARD_H, (row + 1) * PIECE_H + padY);
+      return {
+        minX,
+        minY,
+        width: maxX - minX,
+        height: maxY - minY
+      };
+    }
+
+    function renderPuzzleTray() {
+      const trayGrid = document.getElementById('puzzle-tray-grid');
+      const emptyBox = document.getElementById('puzzle-tray-empty');
+      const countEl = document.getElementById('puzzle-tray-count');
+      const hintText = document.getElementById('puzzle-hint-text');
+
+      const unplaced = getUnplacedPieces();
+      countEl.textContent = `${unplaced.length} k dispozici`;
+
+      trayGrid.innerHTML = "";
+
+      if (unplaced.length === 0) {
+        emptyBox.classList.remove('hidden');
+        if (gameState.placedPieces.length === 12) {
+          hintText.innerHTML = "🎉 <b>Vše složeno!</b> Všechny dílky jsou na svém místě.";
+        } else if (gameState.placedPieces.length > 0) {
+          hintText.innerHTML = "✅ Všechny získané dílky jsou na desce. Vydejte se pro další na mapu!";
+        } else {
+          hintText.innerHTML = "👆 Získejte dílky správnou odpovědí na stanovištích ve Slatině.";
+        }
+        return;
+      }
+
+      emptyBox.classList.add('hidden');
+
+      if (selectedTrayPieceId) {
+        hintText.innerHTML = `✨ <b>Dílek vybrán!</b> Přetáhněte ho nebo klepněte na odpovídající místo na desce.`;
+      } else {
+        hintText.innerHTML = "🖐️ <b>Táhněte dílek prstem</b> a najděte jeho místo na desce!";
+      }
+
+      unplaced.forEach((id, index) => {
+        const box = getPieceLocalBox(id);
+        const isSelected = (selectedTrayPieceId === id);
+
+        const card = document.createElement('div');
+        card.id = `tray-piece-card-${id}`;
+        card.className = `puzzle-tray-card bg-white p-2.5 rounded-2xl border-2 border-amber-200/90 shadow-xs hover:border-brand-green flex flex-col items-center ${isSelected ? 'is-selected' : ''}`;
+        
+        card.onpointerdown = (e) => startPieceDrag(e, id);
+        card.onclick = () => selectTrayPiece(id);
+
+        card.innerHTML = `
+          <div class="w-full flex items-center justify-between mb-1.5 px-0.5">
+            <span class="text-[11px] font-extrabold text-brand-dark flex items-center gap-1 font-heading">
+              <i class="fa-solid fa-puzzle-piece text-amber-600"></i> Dílek skládačky
+            </span>
+            <span class="text-[9px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded border border-amber-200">
+              K usazení
+            </span>
+          </div>
+
+          <div class="w-full aspect-[2.6/1] flex items-center justify-center p-1 bg-amber-50/50 rounded-xl overflow-visible border border-amber-100">
+            <svg viewBox="${box.minX} ${box.minY} ${box.width} ${box.height}" class="w-full h-full overflow-visible" style="filter: drop-shadow(0 2px 5px rgba(0,0,0,0.15));">
+              <image href="logo_fantazie.png" width="${BOARD_W}" height="${BOARD_H}" clip-path="url(#puzzle-clip-${id})" />
+              <path d="${JIGSAW_PATHS[id]}" fill="none" stroke="#cbd5e1" stroke-width="2" />
+              <path d="${JIGSAW_PATHS[id]}" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" />
+            </svg>
+          </div>
+
+          <div class="mt-2 text-center text-[10px] text-amber-900 font-bold flex items-center justify-center gap-1 w-full bg-amber-100/70 py-1 rounded-lg border border-amber-200 transition">
+            <i class="fa-solid fa-hand text-amber-700"></i> Táhnout na desku
+          </div>
+        `;
+
+        trayGrid.appendChild(card);
+      });
+    }
+
+    let isDragging = false;
+    let draggedId = null;
+    let dragProxy = null;
+    let dragStartPos = { x: 0, y: 0 };
+    let hasMoved = false;
+
+    function startPieceDrag(e, id) {
+      if (e.button && e.button !== 0) return;
+      e.preventDefault();
+
+      draggedId = id;
+      isDragging = true;
+      hasMoved = false;
+      dragStartPos = { x: e.clientX, y: e.clientY };
+
+      const card = document.getElementById(`tray-piece-card-${id}`);
+      if (card) {
+        card.classList.add('is-dragging-origin');
+      }
+
+      createDragProxy(id, e.clientX, e.clientY);
+      // Žádné předem rozsvícení cílového slotu – hráč musí místo najít sám!
+      clearTargetHighlight();
+
+      window.addEventListener('pointermove', onPointerMove, { passive: false });
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+    }
+
+    function createDragProxy(id, clientX, clientY) {
+      dragProxy = document.getElementById('drag-proxy');
+      const box = getPieceLocalBox(id);
+
+      const boardSvg = document.getElementById('puzzle-board-svg');
+      const boardRect = boardSvg.getBoundingClientRect();
+      const scale = boardRect.width / BOARD_W;
+
+      const proxyWidth = box.width * scale;
+      const proxyHeight = box.height * scale;
+
+      dragProxy.style.width = `${proxyWidth}px`;
+      dragProxy.style.height = `${proxyHeight}px`;
+      dragProxy.style.left = `${clientX}px`;
+      dragProxy.style.top = `${clientY}px`;
+
+      dragProxy.innerHTML = `
+        <svg viewBox="${box.minX} ${box.minY} ${box.width} ${box.height}" class="w-full h-full overflow-visible">
+          <image href="logo_fantazie.png" width="${BOARD_W}" height="${BOARD_H}" clip-path="url(#puzzle-clip-${id})" />
+          <path d="${JIGSAW_PATHS[id]}" fill="none" stroke="#76AC33" stroke-width="2.5" />
+          <path d="${JIGSAW_PATHS[id]}" fill="none" stroke="#ffffff" stroke-width="1.2" />
+        </svg>
+      `;
+
+      dragProxy.classList.remove('hidden');
+    }
+
+    function onPointerMove(e) {
+      if (!isDragging || !dragProxy) return;
+      e.preventDefault();
+
+      const dx = Math.abs(e.clientX - dragStartPos.x);
+      const dy = Math.abs(e.clientY - dragStartPos.y);
+      if (dx > 4 || dy > 4) {
+        hasMoved = true;
+      }
+
+      dragProxy.style.left = `${e.clientX}px`;
+      dragProxy.style.top = `${e.clientY}px`;
+
+      // Žádné prozrazování správného slotu během tažení
+    }
+
+    function onPointerUp(e) {
+      if (!isDragging) return;
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+
+      const id = draggedId;
+      const clientX = e.clientX;
+      const clientY = e.clientY;
+      const moved = hasMoved;
+
+      isDragging = false;
+      draggedId = null;
+
+      const originCard = document.getElementById(`tray-piece-card-${id}`);
+      if (originCard) {
+        originCard.classList.remove('is-dragging-origin');
+      }
+
+      clearTargetHighlight();
+
+      if (!moved) {
+        removeDragProxy();
+        selectTrayPiece(id);
+        return;
+      }
+
+      const hoveredSlot = getSlotUnderPointer(clientX, clientY);
+
+      if (hoveredSlot === id) {
+        // Správné místo!
+        snapPieceSuccess(id);
+        removeDragProxy();
+      } else if (hoveredSlot && hoveredSlot !== id) {
+        // Hráč to pustil na nesprávný slot na desce
+        playWrongSound();
+        flashSlotError(hoveredSlot);
+        showTemporaryToast(`❌ Sem tento dílek nepasuje. Zkontrolujte tvary zámků a motiv loga.`);
+        removeDragProxy();
+      } else {
+        showTemporaryToast(`Pusťte dílek na odpovídající místo na rámu skládačky.`);
+        removeDragProxy();
+      }
+    }
+
+    function removeDragProxy() {
+      if (dragProxy) {
+        dragProxy.classList.add('hidden');
+        dragProxy.innerHTML = "";
+      }
+    }
+
+    function getSlotScreenBounds(slotId) {
+      const boardSvg = document.getElementById('puzzle-board-svg');
+      if (!boardSvg) return null;
+      const rect = boardSvg.getBoundingClientRect();
+      const col = (slotId - 1) % COLS;
+      const row = Math.floor((slotId - 1) / COLS);
+
+      const scaleX = rect.width / BOARD_W;
+      const scaleY = rect.height / BOARD_H;
+
+      const slotX = rect.left + col * PIECE_W * scaleX;
+      const slotY = rect.top + row * PIECE_H * scaleY;
+      const slotW = PIECE_W * scaleX;
+      const slotH = PIECE_H * scaleY;
+
+      return {
+        left: slotX,
+        right: slotX + slotW,
+        top: slotY,
+        bottom: slotY + slotH,
+        centerX: slotX + slotW / 2,
+        centerY: slotY + slotH / 2,
+        radius: Math.max(slotW, slotH) * 0.6
+      };
+    }
+
+    function isPointerNearTargetSlot(x, y, slotId) {
+      const bounds = getSlotScreenBounds(slotId);
+      if (!bounds) return false;
+      const dist = Math.hypot(x - bounds.centerX, y - bounds.centerY);
+      if (dist <= bounds.radius) return true;
+      if (x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom) return true;
+      return false;
+    }
+
+    function getSlotUnderPointer(x, y) {
+      for (let i = 1; i <= 12; i++) {
+        const b = getSlotScreenBounds(i);
+        if (b && x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) {
+          return i;
+        }
+      }
+      return null;
+    }
+
+    function highlightTargetSlot(slotId, isReadySnap) {
+      // Ponecháno pro případné jemné animace, ale neprozrazujeme dopředu
+    }
+
+    function clearTargetHighlight() {
+      const highlightG = document.getElementById('board-highlight-layer');
+      if (highlightG) highlightG.innerHTML = "";
+    }
+
+    function flashSlotError(slotId) {
+      const highlightG = document.getElementById('board-highlight-layer');
+      if (!highlightG) return;
+      highlightG.innerHTML = "";
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", JIGSAW_PATHS[slotId]);
+      path.setAttribute("fill", "rgba(227, 30, 36, 0.35)");
+      path.setAttribute("stroke", "#E31E24");
+      path.setAttribute("stroke-width", "3");
+      path.setAttribute("class", "shake-cell");
+      highlightG.appendChild(path);
+
+      setTimeout(() => {
+        highlightG.innerHTML = "";
+      }, 450);
+    }
+
+    function snapPieceSuccess(pieceId) {
+      if (gameState.placedPieces.includes(pieceId)) return;
+
+      gameState.placedPieces.push(pieceId);
+      selectedTrayPieceId = null;
+      saveState();
+
+      playSnapSound();
+
+      confetti({
+        particleCount: 28,
+        spread: 50,
+        origin: { y: 0.5 }
+      });
+
+      renderPuzzleBoard();
+      renderPuzzleTray();
+      updateStats();
+
+      showTemporaryToast(`🎉 Skvěle! Dílek perfektně zapadl na své místo!`);
+    }
+
+    function selectTrayPiece(id) {
+      if (selectedTrayPieceId === id) {
+        selectedTrayPieceId = null;
+      } else {
+        selectedTrayPieceId = id;
+      }
+      clearTargetHighlight();
+      renderPuzzleTray();
+    }
+
+    function handleSlotTap(slotId) {
+      if (gameState.placedPieces.includes(slotId)) {
+        showTemporaryToast(`✅ Tato část loga je již správně složena.`);
+        return;
+      }
+
+      if (!selectedTrayPieceId) {
+        showTemporaryToast(`👆 Nejprve vyberte dílek ve svém batohu níže.`);
+        return;
+      }
+
+      if (selectedTrayPieceId === slotId) {
+        snapPieceSuccess(slotId);
+      } else {
+        playWrongSound();
+        flashSlotError(slotId);
+        showTemporaryToast(`❌ Sem vybraný dílek nepatří. Porovnejte tvar výkrojů a kresbu loga!`);
+      }
+    }
+
+    function autoPlaceAllPieces() {
+      const collected = getCollectedPieces();
+      if (collected.length === 0) {
+        alert("Zatím jste v terénu nezískali žádné dílky. Navštivte stanoviště!");
+        return;
+      }
+
+      gameState.placedPieces = [...new Set(collected)];
+      selectedTrayPieceId = null;
+      saveState();
+
+      playSnapSound();
+      confetti({
+        particleCount: 50,
+        spread: 65,
+        origin: { y: 0.5 }
+      });
+
+      renderPuzzleBoard();
+      renderPuzzleTray();
+      updateStats();
+
+      showTemporaryToast("✨ Všechny vaše nalezené dílky byly usazeny na desku!");
+    }
+
+    function showTemporaryToast(text) {
+      const hint = document.getElementById('puzzle-hint-text');
+      if (hint) {
+        hint.innerHTML = `<i class="fa-solid fa-puzzle-piece text-brand-green"></i> <span>${text}</span>`;
+      }
+    }
+
+    function initMap() {
+      const centerLat = 49.1820;
+      const centerLng = 16.6840;
+      
+      leafletMap = L.map('map', {
+        zoomControl: true,
+        attributionControl: false
+      }).setView([centerLat, centerLng], 14);
+
+      const osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+      }).addTo(leafletMap);
+
+      osmLayer.on('tileerror', function(error, tile) {
+        if (tile && !tile._hasFallback) {
+          tile._hasFallback = true;
+          const coords = error.coords;
+          tile.src = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${coords.z}/${coords.y}/${coords.x}`;
+        }
+      });
+
+      STATIONS_DATA.forEach(st => {
+        const visit = gameState.visited[st.id];
+        const isSolved = visit?.solved;
+        const isCorrect = visit?.correct;
+        const failedFirstAttempt = !!visit?.failedFirstAttempt;
+
+        let pinColor = "#94a3b8"; // Nenavštíveno (šedá)
+        let pinIcon = st.id;
+        if (isSolved) {
+          if (isCorrect) {
+            pinColor = failedFirstAttempt ? "#f59e0b" : "#76AC33"; // Oranžová/Amber pokud opraveno, Brand green napoprvé
+            pinIcon = "✓";
+          } else {
+            pinColor = "#E31E24"; // Červená pokud je špatně a čeká na opravu
+            pinIcon = "✗";
+          }
+        } else if (failedFirstAttempt) {
+          // Právě v režimu opravy
+          pinColor = "#E31E24";
+          pinIcon = "✗";
+        }
+
+        const markerHtml = `
+          <div style="background-color: ${pinColor}; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; border: 2.5px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.25);">
+            ${pinIcon}
+          </div>
+        `;
+
+        const icon = L.divIcon({
+          className: 'custom-pin',
+          html: markerHtml,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
+        });
+
+        const marker = L.marker([st.lat, st.lng], { icon: icon }).addTo(leafletMap);
+        marker.on('click', () => {
+          if (!activeTeamId || !gameState.teamName) {
+            openAuthModal('register');
+            return;
+          }
+          handleStationClick(st.id);
+        });
+
+        markers[st.id] = marker;
+      });
+    }
+
+    function locateUser() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            const userLat = pos.coords.latitude;
+            const userLng = pos.coords.longitude;
+            leafletMap.setView([userLat, userLng], 16);
+            
+            L.circleMarker([userLat, userLng], {
+              radius: 9,
+              fillColor: '#76AC33',
+              color: '#ffffff',
+              weight: 3,
+              opacity: 1,
+              fillOpacity: 0.9
+            }).addTo(leafletMap).bindPopup("Tady se nacházíte! 🏃").openPopup();
+          },
+          err => {
+            alert("Nepodařilo se zjistit polohu: " + err.message);
+          }
+        );
+      } else {
+        alert("Geolokace není v tomto prohlížeči podporována.");
+      }
+    }
+
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.remove('text-brand-green', 'font-bold');
+        btn.classList.add('text-slate-400');
+      });
+
+      const activeNav = document.getElementById('nav-btn-' + tabId);
+      if (activeNav) {
+        activeNav.classList.add('text-brand-green', 'font-bold');
+        activeNav.classList.remove('text-slate-400');
+      }
+
+      if (tabId === 'map' && leafletMap) {
+        setTimeout(() => leafletMap.invalidateSize(), 150);
+      }
+    }
+
+    function renderStationsList() {
+      const container = document.getElementById('stations-list');
+      container.innerHTML = "";
+
+      STATIONS_DATA.forEach(st => {
+        const visit = gameState.visited[st.id];
+        let statusBadge = `<span class="bg-slate-100 text-slate-700 text-[10px] px-2.5 py-0.5 rounded-full font-bold border border-slate-300">Nenavštíveno</span>`;
+        let cardBorder = "border-slate-200";
+        let avatarBg = "bg-slate-100 text-slate-700 border border-slate-300";
+
+        if (visit?.solved) {
+          if (visit.correct) {
+            if (visit.failedFirstAttempt) {
+              statusBadge = `<span class="bg-amber-100 text-amber-900 text-[10px] px-2.5 py-0.5 rounded-full font-bold border border-amber-300">✓ Opraveno</span>`;
+              cardBorder = "border-2 border-amber-400/60 bg-amber-50/30";
+              avatarBg = "bg-amber-500 text-white shadow-xs";
+            } else {
+              statusBadge = `<span class="bg-brand-greenLight text-brand-green text-[10px] px-2.5 py-0.5 rounded-full font-bold border border-brand-green/30">✓ Napoprvé</span>`;
+              cardBorder = "border-2 border-brand-green/40 bg-emerald-50/20";
+              avatarBg = "bg-brand-green text-white shadow-xs";
+            }
+          } else {
+            statusBadge = `<span class="bg-rose-50 text-brand-red text-[10px] px-2.5 py-0.5 rounded-full font-bold border border-rose-200">✗ K opravě</span>`;
+            cardBorder = "border-2 border-brand-red/30 bg-rose-50/20";
+            avatarBg = "bg-brand-red text-white shadow-xs";
+          }
+        } else if (isAdmin) {
+          statusBadge = `<span class="bg-amber-100 text-amber-900 text-[10px] px-2 py-0.5 rounded-full font-bold border border-amber-300">🔑 Admin test</span>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = `bg-white p-3.5 rounded-2xl border ${cardBorder} shadow-xs flex items-center justify-between gap-3 active:scale-[0.99] transition cursor-pointer`;
+        card.onclick = () => {
+          if (!activeTeamId || !gameState.teamName) {
+            openAuthModal('register');
+            return;
+          }
+          handleStationClick(st.id);
+        };
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center font-heading font-extrabold text-sm ${avatarBg}">
+              ${st.id}
+            </div>
+            <div>
+              <h4 class="font-bold text-sm text-brand-dark leading-tight">${st.title}</h4>
+              <p class="text-[11px] text-slate-500 truncate max-w-[210px] mt-0.5">${st.desc}</p>
+            </div>
+          </div>
+          <div>
+            ${statusBadge}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function openStationModal(id) {
+      if (!activeTeamId || !gameState.teamName) {
+        openAuthModal('register');
+        return;
+      }
+
+      activeStationId = id;
+      const st = STATIONS_DATA.find(s => s.id === id);
+      if (!st) return;
+
+      document.getElementById('st-modal-badge').textContent = `Stanoviště ${st.id} / 12`;
+      document.getElementById('st-modal-title').textContent = st.title;
+      document.getElementById('st-modal-desc').textContent = st.desc;
+      document.getElementById('st-modal-question').textContent = st.question;
+      document.getElementById('st-modal-feedback').classList.add('hidden');
+
+      document.getElementById('st-modal-nav-link').href = `https://mapy.cz/zakladni?q=${st.lat},${st.lng}`;
+
+      const formContainer = document.getElementById('st-modal-interactive');
+      formContainer.innerHTML = "";
+
+      const visit = gameState.visited[st.id];
+
+      if (visit?.solved && visit.correct) {
+        const isRepaired = !!visit.failedFirstAttempt;
+        const factHtml = st.fact ? `
+          <div class="bg-amber-50/80 border border-amber-200 rounded-xl p-3 text-xs text-amber-950 space-y-1">
+            <p class="font-bold text-amber-900 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+              <i class="fa-solid fa-lightbulb text-amber-500"></i> Víte, že...? / Zajímavost:
+            </p>
+            <p class="text-[12px] leading-relaxed text-slate-700">${st.fact}</p>
+          </div>
+        ` : '';
+
+        const correctOpt = st.options[st.correctIndex];
+        const correctDisplay = (typeof correctOpt === 'object' && correctOpt.img) 
+          ? `<div class="flex items-center gap-2 mt-1"><img src="${correctOpt.img}" class="w-14 h-14 object-contain rounded-lg border bg-white p-1" /><span>${correctOpt.text || ''}</span></div>`
+          : `<b>${correctOpt}</b>`;
+
+        formContainer.innerHTML = `
+          <div class="p-3.5 rounded-2xl ${isRepaired ? 'bg-amber-50 text-amber-950 border border-amber-300' : 'bg-brand-greenLight text-brand-green border border-brand-green/30'} text-xs space-y-2.5">
+            <p class="font-bold flex items-center gap-1.5 text-sm font-heading">
+              <i class="fa-solid fa-circle-check ${isRepaired ? 'text-amber-600' : 'text-brand-green'}"></i>
+              ${isRepaired ? 'Správně opraveno! (započítáno do skóre)' : '🎉 Správně zodpovězeno napoprvé!'}
+            </p>
+            <div>Správná odpověď: ${correctDisplay}</div>
+            ${factHtml}
+            <p class="font-semibold text-[11px] text-emerald-800">Dílek loga Fantazie je odemčen ve vašem batohu!</p>
+            <button onclick="showTab('puzzle'); closeStationModal();" class="w-full ${isRepaired ? 'bg-amber-600 hover:bg-amber-700' : 'bg-brand-green hover:bg-brand-greenDark'} text-white font-bold py-2 px-3 rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 text-xs">
+              <i class="fa-solid fa-puzzle-piece"></i> Přejít na skládání loga
+            </button>
+          </div>
+        `;
+      } else if (visit?.solved && !visit.correct) {
+        formContainer.innerHTML = `
+          <div class="p-3.5 rounded-2xl bg-rose-50 text-brand-red border border-rose-200 text-xs space-y-2">
+            <p class="font-bold flex items-center gap-1.5 text-sm font-heading">
+              <i class="fa-solid fa-circle-xmark"></i> První pokus nebyl správný
+            </p>
+            <p class="text-slate-600">Nevadí! Odpověď můžete ihned opravit. Vyberte správnou možnost znovu:</p>
+            <button onclick="unlockRetry(${st.id})" class="w-full bg-brand-red hover:bg-rose-700 text-white font-bold py-2.5 px-3 rounded-xl shadow-xs transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-rotate-left"></i> Opravit odpověď nyní
+            </button>
+          </div>
+        `;
+      } else {
+        // Zobrazení odpovědí (textové nebo obrázkové)
+        const isImageOptions = st.options.some(opt => typeof opt === 'object' && opt.img);
+
+        if (isImageOptions) {
+          const grid = document.createElement('div');
+          grid.className = "grid grid-cols-2 gap-2.5";
+          st.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = "p-2.5 rounded-2xl border-2 border-slate-200 hover:border-brand-green hover:bg-brand-greenLight/30 active:scale-[0.98] transition text-center flex flex-col items-center gap-1.5 group bg-white shadow-2xs";
+            const imgHtml = opt.img ? `<img src="${opt.img}" alt="${opt.text || ''}" class="w-full h-24 object-contain rounded-xl bg-slate-50 p-1 border border-slate-100 group-hover:scale-105 transition" />` : '';
+            btn.innerHTML = `
+              ${imgHtml}
+              <span class="text-xs font-bold text-brand-dark leading-tight">${opt.text || ''}</span>
+            `;
+            btn.onclick = () => submitAnswer(st.id, idx);
+            grid.appendChild(btn);
+          });
+          formContainer.appendChild(grid);
+        } else {
+          st.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-3 rounded-xl border border-slate-200 hover:border-brand-green hover:bg-brand-greenLight/50 active:scale-[0.99] transition text-xs font-semibold text-brand-dark flex items-center justify-between group";
+            btn.innerHTML = `
+              <span>${typeof opt === 'object' ? (opt.text || '') : opt}</span>
+              <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-brand-green transition"></i>
+            `;
+            btn.onclick = () => submitAnswer(st.id, idx);
+            formContainer.appendChild(btn);
+          });
+        }
+      }
+
+      document.getElementById('modal-station').classList.remove('hidden');
+    }
+
+    function closeStationModal() {
+      document.getElementById('modal-station').classList.add('hidden');
+      activeStationId = null;
+    }
+
+    function submitAnswer(stId, chosenIndex) {
+      const st = STATIONS_DATA.find(s => s.id === stId);
+      if (!st) return;
+
+      const isCorrect = (chosenIndex === st.correctIndex);
+      const prevVisit = gameState.visited[stId];
+      const hadFailedBefore = (prevVisit?.failedFirstAttempt === true) || (prevVisit && !prevVisit.correct) || (!isCorrect);
+
+      gameState.visited[stId] = {
+        solved: true,
+        correct: isCorrect,
+        failedFirstAttempt: hadFailedBefore,
+        timestamp: new Date().toISOString()
+      };
+      saveState();
+
+      updateStats();
+      renderStationsList();
+      renderPuzzleBoard();
+      renderPuzzleTray();
+      updateMapMarkers();
+
+      const feedbackEl = document.getElementById('st-modal-feedback');
+      feedbackEl.classList.remove('hidden');
+
+      if (isCorrect) {
+        if (hadFailedBefore) {
+          feedbackEl.className = "p-3 rounded-2xl text-xs font-bold bg-amber-100 text-amber-950 border border-amber-300";
+          feedbackEl.innerHTML = `
+            <div>👏 <b>Skvěle, odpověď jste úspěšně opravili!</b> Získali jste nový dílek do batohu a bod se vám započítává do skóre!</div>
+            <button onclick="showTab('puzzle'); closeStationModal();" class="mt-2.5 w-full bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold py-2 px-3 rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 text-xs">
+              <i class="fa-solid fa-puzzle-piece"></i> Jít vyzkoušet dílek do skládačky
+            </button>
+          `;
+        } else {
+          feedbackEl.className = "p-3 rounded-2xl text-xs font-bold bg-brand-greenLight text-brand-green border border-brand-green/30";
+          feedbackEl.innerHTML = `
+            <div>🎉 <b>Skvěle! To je správně hned napoprvé.</b> Získali jste nový dílek do batohu k poskládání loga Fantazie!</div>
+            <button onclick="showTab('puzzle'); closeStationModal();" class="mt-2.5 w-full bg-brand-green hover:bg-brand-greenDark active:scale-95 text-white font-bold py-2 px-3 rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 text-xs">
+              <i class="fa-solid fa-puzzle-piece"></i> Jít vyzkoušet dílek do skládačky
+            </button>
+          `;
+        }
+        confetti({
+          particleCount: 40,
+          spread: 60,
+          origin: { y: 0.7 }
+        });
+      } else {
+        feedbackEl.className = "p-3 rounded-2xl text-xs font-bold bg-rose-50 text-brand-red border border-rose-200";
+        feedbackEl.innerHTML = `❌ To bohužel není správně. Můžete ale odpověď hned opravit!`;
+      }
+
+      setTimeout(() => {
+        openStationModal(stId);
+      }, 1200);
+    }
+
+    function unlockRetry(stId) {
+      if (gameState.visited[stId]) {
+        gameState.visited[stId].solved = false;
+        gameState.visited[stId].failedFirstAttempt = true;
+      }
+      saveState();
+      updateStats();
+      renderStationsList();
+      renderPuzzleBoard();
+      renderPuzzleTray();
+      updateMapMarkers();
+      openStationModal(stId);
+    }
+
+    function updateStats() {
+      const visitedCount = Object.keys(gameState.visited).length;
+      let correctCount = 0;
+      for (const k in gameState.visited) {
+        if (gameState.visited[k].correct) correctCount++;
+      }
+
+      const placedCount = gameState.placedPieces.length;
+
+      document.getElementById('stat-visited').textContent = visitedCount;
+      document.getElementById('stat-correct').textContent = correctCount;
+      
+      const puzzlePercent = Math.round((placedCount / 12) * 100);
+      document.getElementById('stat-puzzle').textContent = puzzlePercent + "%";
+      document.getElementById('progress-bar-fill').style.width = ((correctCount / 12) * 100) + "%";
+
+      const unplacedCount = getUnplacedPieces().length;
+      const navBadge = document.getElementById('nav-puzzle-badge');
+      if (unplacedCount > 0) {
+        navBadge.textContent = "+" + unplacedCount;
+        navBadge.className = "absolute -top-1 -right-2 bg-brand-yellow text-brand-dark text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-bounce";
+      } else {
+        navBadge.textContent = placedCount;
+        navBadge.className = "absolute -top-1 -right-2 bg-brand-green text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold";
+      }
+
+      document.getElementById('reward-curr-correct').textContent = correctCount;
+
+      const completedBox = document.getElementById('puzzle-completed-box');
+      if (placedCount === 12) {
+        completedBox.classList.remove('hidden');
+      } else {
+        completedBox.classList.add('hidden');
+      }
+
+      const isRewardEarned = (correctCount === 12);
+      const rewardLockedEl = document.getElementById('reward-locked');
+      const rewardUnlockedEl = document.getElementById('reward-unlocked');
+      const giftPulseEl = document.getElementById('nav-gift-pulse');
+
+      if (isRewardEarned) {
+        rewardLockedEl.classList.add('hidden');
+        rewardUnlockedEl.classList.remove('hidden');
+        giftPulseEl.classList.remove('hidden');
+
+        document.getElementById('prize-unique-code').textContent = gameState.uniqueCode;
+        document.getElementById('prize-team-display').textContent = formatTeamSummary(gameState.teamName, gameState.kidsCount, gameState.adultsCount);
+        document.getElementById('prize-password-display').textContent = gameState.password || "–";
+        document.getElementById('prize-score-display').textContent = `${correctCount} z 12 správně`;
+      } else {
+        rewardLockedEl.classList.remove('hidden');
+        rewardUnlockedEl.classList.add('hidden');
+        giftPulseEl.classList.add('hidden');
+      }
+    }
+
+    function updateMapMarkers() {
+      STATIONS_DATA.forEach(st => {
+        const marker = markers[st.id];
+        if (!marker) return;
+
+        const visit = gameState.visited[st.id];
+        const isSolved = visit?.solved;
+        const isCorrect = visit?.correct;
+        const failedFirstAttempt = !!visit?.failedFirstAttempt;
+
+        let pinColor = "#94a3b8"; // Nenavštíveno (šedá)
+        let pinIcon = st.id;
+        if (isSolved) {
+          if (isCorrect) {
+            pinColor = failedFirstAttempt ? "#f59e0b" : "#76AC33"; // Oranžová/Amber pokud opraveno, Brand green napoprvé
+            pinIcon = "✓";
+          } else {
+            pinColor = "#E31E24"; // Červená pokud je špatně
+            pinIcon = "✗";
+          }
+        } else if (failedFirstAttempt) {
+          pinColor = "#E31E24";
+          pinIcon = "✗";
+        }
+
+        const markerHtml = `
+          <div style="background-color: ${pinColor}; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; border: 2.5px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.25);">
+            ${pinIcon}
+          </div>
+        `;
+
+        marker.setIcon(L.divIcon({
+          className: 'custom-pin',
+          html: markerHtml,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
+        }));
+      });
+    }
+
+    function launchConfetti() {
+      const duration = 3 * 1000;
+      const end = Date.now() + duration;
+
+      (function frame() {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 }
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 }
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      }());
+    }
+
+    function toggleSimPanel() {
+      const content = document.getElementById('sim-panel-content');
+      const chevron = document.getElementById('sim-panel-chevron');
+      content.classList.toggle('hidden');
+      chevron.classList.toggle('rotate-180');
+    }
+
+    function renderSimButtons() {
+      const grid = document.getElementById('sim-buttons-grid');
+      grid.innerHTML = "";
+      for (let i = 1; i <= 12; i++) {
+        const btn = document.createElement('button');
+        btn.className = "bg-slate-100 hover:bg-slate-200 text-brand-dark font-bold py-1 px-1 rounded-lg text-center active:scale-95 transition border border-slate-200";
+        btn.textContent = "#" + i;
+        btn.title = "Simulovat naskenování QR kódu stanoviště " + i;
+        btn.onclick = () => openStationModal(i);
+        grid.appendChild(btn);
+      }
+    }
+
+    // OVLÁDÁNÍ KLIKNUTÍ NA STANOVIŠTĚ (MAPA & SEZNAM)
+    function handleStationClick(stId) {
+      if (isAdmin || gameState.visited[stId]?.solved) {
+        openStationModal(stId);
+      } else {
+        openStationLockedModal(stId);
+      }
+    }
+
+    function openStationLockedModal(stId) {
+      const st = STATIONS_DATA.find(s => s.id === stId);
+      if (!st) return;
+
+      document.getElementById('locked-modal-badge').textContent = `Stanoviště #${st.id} / 12`;
+      document.getElementById('locked-modal-title').textContent = st.title;
+      document.getElementById('locked-modal-desc').textContent = st.desc;
+
+      const mapyLink = document.getElementById('locked-modal-mapy-link');
+      if (mapyLink) {
+        mapyLink.href = `https://mapy.cz/zakladni?q=${st.lat},${st.lng}`;
+      }
+
+      const gmapsLink = document.getElementById('locked-modal-gmaps-link');
+      if (gmapsLink) {
+        gmapsLink.href = `https://www.google.com/maps/search/?api=1&query=${st.lat},${st.lng}`;
+      }
+
+      document.getElementById('modal-station-locked').classList.remove('hidden');
+    }
+
+    function closeStationLockedModal() {
+      document.getElementById('modal-station-locked').classList.add('hidden');
+    }
+
+    // ADMIN PŘIHLÁŠENÍ & ZABEZPEČENÍ TESTOVACÍCH PRVKŮ (HESLO: Fantoska30@)
+    function openAdminModal() {
+      updateAdminUI();
+      const input = document.getElementById('admin-password-input');
+      if (input) input.value = "";
+      const errBox = document.getElementById('admin-login-error');
+      if (errBox) errBox.classList.add('hidden');
+      document.getElementById('modal-admin').classList.remove('hidden');
+      if (!isAdmin && input) {
+        setTimeout(() => input.focus(), 150);
+      }
+    }
+
+    function closeAdminModal() {
+      document.getElementById('modal-admin').classList.add('hidden');
+    }
+
+    function handleAdminLoginSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('admin-password-input');
+      const errBox = document.getElementById('admin-login-error');
+      const val = (input?.value || '').trim();
+
+      if (val === ADMIN_PASSWORD) {
+        isAdmin = true;
+        sessionStorage.setItem("fantazie30_admin", "true");
+        if (errBox) errBox.classList.add('hidden');
+        updateAdminUI();
+        renderStationsList();
+        if (leafletMap) updateMapMarkers();
+        showToast("🔑 Admin režim byl úspěšně aktivován!");
+      } else {
+        if (errBox) {
+          errBox.textContent = "Nesprávné heslo pro administraci.";
+          errBox.classList.remove('hidden');
+        }
+        if (input) {
+          input.select();
+          input.focus();
+        }
+      }
+    }
+
+    function logoutAdmin() {
+      isAdmin = false;
+      sessionStorage.removeItem("fantazie30_admin");
+      updateAdminUI();
+      renderStationsList();
+      if (leafletMap) updateMapMarkers();
+      closeAdminModal();
+      showToast("Admin režim byl odhlášen.");
+    }
+
+    function updateAdminUI() {
+      const panel = document.getElementById('admin-test-panel');
+      if (panel) {
+        if (isAdmin) {
+          panel.classList.remove('hidden');
+        } else {
+          panel.classList.add('hidden');
+        }
+      }
+
+      const badge = document.getElementById('header-admin-badge');
+      if (badge) {
+        if (isAdmin) {
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+
+      const footerText = document.getElementById('footer-admin-text');
+      if (footerText) {
+        footerText.textContent = isAdmin ? "Správa hry (Admin aktivní - Odhlásit)" : "Správa hry (Organizátoři)";
+      }
+
+      const loginView = document.getElementById('admin-login-view');
+      const activeView = document.getElementById('admin-active-view');
+      if (loginView && activeView) {
+        if (isAdmin) {
+          loginView.classList.add('hidden');
+          activeView.classList.remove('hidden');
+        } else {
+          loginView.classList.remove('hidden');
+          activeView.classList.add('hidden');
+        }
+      }
+    }
+
+    function showToast(msg) {
+      let el = document.getElementById('global-toast');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'global-toast';
+        el.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-[99] bg-slate-900/95 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-semibold backdrop-blur transition-all duration-300 opacity-0 -translate-y-2 pointer-events-none max-w-sm text-center border border-white/20';
+        document.body.appendChild(el);
+      }
+      el.textContent = msg;
+      el.classList.remove('opacity-0', '-translate-y-2');
+      el.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        el.classList.remove('opacity-100', 'translate-y-0');
+        el.classList.add('opacity-0', '-translate-y-2');
+      }, 2800);
+    }
+
+    function resetAllGameData() {
+      if (!isAdmin) {
+        openAdminModal();
+        return;
+      }
+      if (confirm("Opravdu chcete kompletně smazat všechny týmy a data z tohoto zařízení a začít od nuly?")) {
+        localStorage.removeItem(STORAGE_TEAMS_KEY);
+        localStorage.removeItem(STORAGE_ACTIVE_TEAM_KEY);
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
+        location.reload();
+      }
+    }
+
+    function openQrCodesGenerator() {
+      if (!isAdmin) {
+        openAdminModal();
+        return;
+      }
+      const input = document.getElementById('qr-base-url-input');
+      if (input && !input.value) {
+        let currentUrl = window.location.href.split('?')[0];
+        if (currentUrl.endsWith('/index.html')) {
+          currentUrl = currentUrl.substring(0, currentUrl.length - 10);
+        }
+        input.value = currentUrl;
+      }
+      regenerateLaserQrCodes();
+      document.getElementById('modal-laser-qr').classList.remove('hidden');
+    }
+
+    function regenerateLaserQrCodes() {
+      const container = document.getElementById('qr-cards-container');
+      container.innerHTML = "";
+
+      const input = document.getElementById('qr-base-url-input');
+      let baseUrl = (input?.value || window.location.href.split('?')[0]).trim();
+      if (baseUrl.endsWith('/index.html')) {
+        baseUrl = baseUrl.substring(0, baseUrl.length - 10);
+      }
+
+      STATIONS_DATA.forEach(st => {
+        const glue = baseUrl.includes('?') ? '&' : '?';
+        const qrUrl = `${baseUrl}${glue}stanoviste=${st.id}`;
+        const qrImgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrUrl)}`;
+
+        const card = document.createElement('div');
+        card.className = "flex items-center gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-200";
+        card.innerHTML = `
+          <img src="${qrImgSrc}" alt="QR #${st.id}" class="w-20 h-20 bg-white p-1 rounded-xl shadow-xs border border-slate-200 shrink-0" />
+          <div class="flex-1 text-xs min-w-0">
+            <h4 class="font-bold text-brand-dark text-sm font-heading">Stanoviště #${st.id}: ${st.title}</h4>
+            <p class="text-slate-500 text-[11px] mt-0.5 truncate">${st.desc}</p>
+            <div class="mt-1 font-mono text-[10px] text-brand-dark bg-white p-1 rounded-lg border border-slate-200 break-all">
+              ${qrUrl}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function closeLaserModal() {
+      document.getElementById('modal-laser-qr').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
