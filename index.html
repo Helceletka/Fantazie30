@@ -942,13 +942,12 @@
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
-    // 12 STANOVIŠŤ VE SLATINĚ PRO 30 LET FANTAZIE
-    // 12 STANOVIŠŤ VE SLATINĚ PRO 30 LET FANTAZIE (OFICIÁLNÍ ZNĚNÍ)
+    // 12 STANOVIŠŤ VE SLATINĚ PRO 30 LET FANTAZIE (SEŘAZENO PODLE TRASY VE SLATINĚ)
     const STATIONS_DATA = [
       {
         id: 1,
-        title: "Pobočka Fantázie",
-        lat: 49.1800753,
+        title: "Fantázie",
+        lat: 49.1800750,
         lng: 16.6803050,
         desc: "Tilhonova 49 • Domov naší pobočky, kde to všechno před 30 lety začalo.",
         question: "Jaký rok byla založena pobočka Fantázie?",
@@ -958,21 +957,21 @@
       },
       {
         id: 2,
-        title: "Učebny Fantázie",
-        lat: 49.1772528,
-        lng: 16.6917161,
-        desc: "Prostory a klubovny pobočky Fantázie.",
-        question: "Kolik má SVČ Helceletka - pobočka Fantázie v současnosti učeben ve Slatině?",
-        options: ["5", "9", "2"],
-        correctIndex: 0,
-        fact: "Dvě učebny se nachází v přízemí, a to keramická dílna a velká klubovna. V prvním patře pak kuchyňka, výtvarná dílna a malá klubovna."
+        title: "Hřiště Černozemní",
+        lat: 49.1766108,
+        lng: 16.6829831,
+        desc: "Oblíbené sportoviště a dětské hřiště v ulici Černozemní.",
+        question: "Jakou akci ve spolupráci s MČ Slatina pořádá SVČ Helceletka - pobočka Fantázie na hřišti Černozemní?",
+        options: ["Stezka sv. Martina", "Dětský den", "Pálení čarodějnic"],
+        correctIndex: 2,
+        fact: "V minulém školním roce splnilo čarodějné úkoly a stanoviště na Černozemní téměř 250 dětí!"
       },
       {
         id: 3,
-        title: "Nabídka kroužků",
+        title: "Hřiště Kikrleho",
         lat: 49.1760744,
         lng: 16.6895458,
-        desc: "Pestrá nabídka volnočasových aktivit pro děti i mládež.",
+        desc: "Dětské hřiště v ulici Kikrleho.",
         question: "Kolik nabízí SVČ Helceletka - pobočka Fantázie ve školním roce 2026/2027 zájmových kroužků?",
         options: ["65", "70", "82"],
         correctIndex: 2,
@@ -980,10 +979,21 @@
       },
       {
         id: 4,
-        title: "Zahrada a jezírko",
+        title: "Kostel",
+        lat: 49.1772528,
+        lng: 16.6917161,
+        desc: "Kostel Povýšení sv. Kříže ve Slatině.",
+        question: "Kolik má SVČ Helceletka - pobočka Fantázie v současnosti učeben ve Slatině?",
+        options: ["5", "9", "2"],
+        correctIndex: 0,
+        fact: "Dvě učebny se nachází v přízemí, a to keramická dílna a velká klubovna. V prvním patře pak kuchyňka, výtvarná dílna a malá klubovna."
+      },
+      {
+        id: 5,
+        title: "Hřiště Hliník",
         lat: 49.1781458,
         lng: 16.6891119,
-        desc: "Klidný kout naší zahrady s vodním jezírkem.",
+        desc: "Hřiště a zelené prostranství Hliník.",
         question: "Jaké zvíře plave v jezírku na zahradě SVČ Helceletka - pobočka Fantázie?",
         options: [
           { text: "Karas zlatý", img: "image5.png" },
@@ -994,92 +1004,81 @@
         fact: "Z naší přírodovědné pobočky Kamenačky jsme dostali dvě rybičky, které jsme pojmenovali Ferda a Ferda. Dnes v jezírku plavou desítky jejich potomků!"
       },
       {
-        id: 5,
-        title: "Keramická dílna",
-        lat: 49.1795894,
-        lng: 16.6854603,
-        desc: "Místo plné kreativity a tvoření z hlíny.",
-        question: "Kolik hlíny Fantázie spotřebuje na keramických kroužcích a výukových programech pro školy ve Slatině za jeden školní rok?",
-        options: ["800 kg", "1100 kg", "2500 kg"],
-        correctIndex: 1,
-        fact: "Než se hotový výrobek dostane k majiteli, musí projít dvěma výpaly v keramické peci. Tento proces může trvat až tři týdny. Teplota při prvním výpalu (přežahu) bývá kolem 970 °C a ostrý výpal na glazuru dosahuje až 1155 °C."
-      },
-      {
         id: 6,
-        title: "Barvy na Fantázii",
-        lat: 49.1803011,
-        lng: 16.6853039,
-        desc: "Inspirativní prostředí pro tvorbu.",
-        question: "Jakou barvou je vymalována keramická učebna?",
-        options: ["Žlutou", "Zelenou", "Modrou"],
-        correctIndex: 1,
-        fact: "Zelená barva uklidňuje mysl, aniž by uspávala. Pomáhá udržet pozornost po delší dobu a podporuje schopnost vstřebávat nové informace a tvořit."
+        title: "Kaplička sv. Floriana",
+        lat: 49.1769903,
+        lng: 16.6876289,
+        desc: "Historická kaplička sv. Floriána ve Slatině.",
+        question: "Z jakých ulic můžete vejít do budovy Fantázie ve Slatině?",
+        options: ["Tilhonova x Langrova", "Tilhonova x Vyškovská", "Tilhonova x Lučiny"],
+        correctIndex: 0,
+        fact: "U vchodu z ulice Langrova máme pro vás malou knihobudku, ze které si můžete kdykoliv půjčit nebo odnést knížky domů na čtení!"
       },
       {
         id: 7,
-        title: "Schody ve Fantázii",
-        lat: 49.1812458,
-        lng: 16.6803208,
-        desc: "Kroky nahoru a dolů v naší budově.",
-        question: "Kolik mají celkem na pobočce Fantázie schodů?",
-        options: ["56", "36", "76"],
-        correctIndex: 0,
-        fact: "Do celkového počtu schodů jsou započítány nejen schody do patra, ale také schody vedoucí na půdu, do sklepa i na dvůr Fantázie."
-      },
-      {
-        id: 8,
-        title: "Hřiště Černozemní",
-        lat: 49.1766108,
-        lng: 16.6829831,
-        desc: "Oblíbené sportoviště a dětské hřiště ve Slatině.",
-        question: "Jakou akci ve spolupráci s MČ Slatina pořádá SVČ Helceletka - pobočka Fantázie na hřišti Černozemní?",
-        options: ["Stezka sv. Martina", "Dětský den", "Pálení čarodějnic"],
-        correctIndex: 2,
-        fact: "V minulém školním roce splnilo čarodějné úkoly a stanoviště na Černozemní téměř 250 dětí!"
-      },
-      {
-        id: 9,
-        title: "Kde Fantázie působí",
-        lat: 49.1824611,
-        lng: 16.6745050,
-        desc: "Působnost Fantázie v Brně a okolí.",
-        question: "Ve které obci SVČ Helceletka - pobočka Fantázie nepůsobí?",
-        options: ["Podolí u Brna", "Šlapanice u Brna", "Mokrá - Horákov"],
-        correctIndex: 0,
-        fact: "Fantázie kromě kroužků ve Šlapanicích u Brna a v Mokré - Horákově má pravidelnou činnost taktéž na ZŠ Pohankova, ZŠ Holzova a ZŠ Rašínova."
-      },
-      {
-        id: 10,
-        title: "Kroužky s nápadem",
-        lat: 49.1802847,
-        lng: 16.6760486,
-        desc: "Objevování dovedností a řemesel.",
-        question: "Který z těchto kroužků na Fantázii najdete v nabídce?",
-        options: ["Malý kutil", "Baletní přípravka", "Robotika pro seniory"],
-        correctIndex: 0,
-        fact: "Kroužek Malý kutil boří staré předsudky! Šroubováky, pilky a kladívka už dávno nejsou jen klučičí záležitostí. Kroužek je mezi dětmi tak populární, že do dílny čím dál častěji a s obrovským nadšením míří i holky."
-      },
-      {
-        id: 11,
-        title: "Tábory Fantázie",
+        title: "Kašna Přemyslovo nám.",
         lat: 49.1777133,
         lng: 16.6845622,
-        desc: "Léto plné dobrodružství a kamarádů.",
+        desc: "Kašna a park na Přemyslově náměstí.",
         question: "Jaké dva hlavní typy táborů Fantázie každoročně pořádá?",
         options: ["Jednodenní a příměstské", "Víkendové a pobytové", "Příměstské i pobytové"],
         correctIndex: 2,
         fact: "Máme za sebou neuvěřitelně úspěšný školní rok. Na Fantázii jsme zorganizovali celkem 16 táborů! Hvězdou sezóny se staly naše dva pobytové tábory, které trhaly rekordy v naplněnosti a vyprodaly se v rekordním čase."
       },
       {
-        id: 12,
-        title: "Vchody do Fantázie",
-        lat: 49.1769903,
-        lng: 16.6876289,
-        desc: "Jak k nám trefit ze slatinských ulic.",
-        question: "Z jakých ulic můžete vejít do budovy Fantázie ve Slatině?",
-        options: ["Tilhonova x Langrova", "Tilhonova x Vyškovská", "Tilhonova x Lučiny"],
+        id: 8,
+        title: "ZŠ Jihomoravské nám.",
+        lat: 49.1795894,
+        lng: 16.6854603,
+        desc: "Základní škola na Jihomoravském náměstí.",
+        question: "Kolik hlíny Fantázie spotřebuje na keramických kroužcích a výukových programech pro školy ve Slatině za jeden školní rok?",
+        options: ["800 kg", "1100 kg", "2500 kg"],
+        correctIndex: 1,
+        fact: "Než se hotový výrobek dostane k majiteli, musí projít dvěma výpaly v keramické peci. Tento proces může trvat až tři týdny. Teplota při prvním výpalu (přežahu) bývá kolem 970 °C a ostrý výpal na glazuru dosahuje až 1155 °C."
+      },
+      {
+        id: 9,
+        title: "Bublina",
+        lat: 49.1803011,
+        lng: 16.6853039,
+        desc: "Sportovní hala / Bublina ve Slatině.",
+        question: "Jakou barvou je vymalována keramická učebna?",
+        options: ["Žlutou", "Zelenou", "Modrou"],
+        correctIndex: 1,
+        fact: "Zelená barva uklidňuje mysl, aniž by uspávala. Pomáhá udržet pozornost po delší dobu a podporuje schopnost vstřebávat nové informace a tvořit."
+      },
+      {
+        id: 10,
+        title: "Hřiště Vlnitá",
+        lat: 49.1812458,
+        lng: 16.6803208,
+        desc: "Dětské hřiště v ulici Vlnitá.",
+        question: "Kolik mají celkem na pobočce Fantázie schodů?",
+        options: ["56", "36", "76"],
         correctIndex: 0,
-        fact: "U vchodu z ulice Langrova máme pro vás malou knihobudku, ze které si můžete kdykoliv půjčit nebo odnést knížky domů na čtení!"
+        fact: "Do celkového počtu schodů jsou započítány nejen schody do patra, ale také schody vedoucí na půdu, do sklepa i na dvůr Fantázie."
+      },
+      {
+        id: 11,
+        title: "Hřiště Vlárská",
+        lat: 49.1824611,
+        lng: 16.6745050,
+        desc: "Hřiště v ulici Vlárská.",
+        question: "Ve které obci SVČ Helceletka - pobočka Fantázie nepůsobí?",
+        options: ["Podolí u Brna", "Šlapanice u Brna", "Mokrá - Horákov"],
+        correctIndex: 0,
+        fact: "Fantázie kromě kroužků ve Šlapanicích u Brna a v Mokré - Horákově má pravidelnou činnost taktéž na ZŠ Pohankova, ZŠ Holzova a ZŠ Rašínova."
+      },
+      {
+        id: 12,
+        title: "Hřiště Langrova",
+        lat: 49.1802847,
+        lng: 16.6760486,
+        desc: "Hřiště v ulici Langrova nedaleko pobočky Fantázie.",
+        question: "Který z těchto kroužků na Fantázii najdete v nabídce?",
+        options: ["Malý kutil", "Baletní přípravka", "Robotika pro seniory"],
+        correctIndex: 0,
+        fact: "Kroužek Malý kutil boří staré předsudky! Šroubováky, pilky a kladívka už dávno nejsou jen klučičí záležitostí. Kroužek je mezi dětmi tak populární, že do dílny čím dál častěji a s obrovským nadšením míří i holky."
       }
     ];
 

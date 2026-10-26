@@ -10,30 +10,19 @@ Tato složka obsahuje připravené QR kódy pro všech **12 stanovišť** jubile
 
 ---
 
-## 💡 Doporučené parametry pro 3D tisk:
-1. **Velikost štítku:** cca **50 × 50 mm** až **75 × 75 mm** (aby šel snadno načíst telefonem i z mírné dálky).
-2. **Dvoubarevný tisk (Color change / Filament swap):**
-   * **Spodní destička (pozadí):** Bílá nebo světlá (výška cca 1.0 – 1.6 mm).
-   * **Vystouplý QR kód (reliéf):** Černá nebo tmavá (výška cca 0.6 – 1.0 mm nad destičku).
-   * Ve sliceru (PrusaSlicer / Bambu Studio) stačí na vrstvě, kde začíná reliéf QR kódu, vložit **pauzu na výměnu filamentu (Color Change / M600)**.
-3. **Materiál:** Pro venkovní použití doporučujeme **PETG** nebo **ASA/ABS** (odolá dešti a letnímu slunci lépe než PLA).
-4. **Tryska a vrstva:** Standardní tryska 0.4 mm a výška vrstvy 0.20 mm.
+## 🗺️ Seznam stanovišť, souřadnice a přiřazené otázky:
 
----
-
-## 🗺️ Seznam stanovišť a cílové adresy:
-
-| # | Název stanoviště | Cílová adresa v QR kódu |
-|---|---|---|
-| **01** | Pobočka Fantázie | `https://fantazie30.helceletka.cz/?stanoviste=1` |
-| **02** | Učebny Fantázie | `https://fantazie30.helceletka.cz/?stanoviste=2` |
-| **03** | Nabídka kroužků | `https://fantazie30.helceletka.cz/?stanoviste=3` |
-| **04** | Zahrada a jezírko | `https://fantazie30.helceletka.cz/?stanoviste=4` |
-| **05** | Keramická dílna | `https://fantazie30.helceletka.cz/?stanoviste=5` |
-| **06** | Barvy na Fantázii | `https://fantazie30.helceletka.cz/?stanoviste=6` |
-| **07** | Schody ve Fantázii | `https://fantazie30.helceletka.cz/?stanoviste=7` |
-| **08** | Hřiště Černozemní | `https://fantazie30.helceletka.cz/?stanoviste=8` |
-| **09** | Kde Fantázie působí | `https://fantazie30.helceletka.cz/?stanoviste=9` |
-| **10** | Kroužky s nápadem | `https://fantazie30.helceletka.cz/?stanoviste=10` |
-| **11** | Tábory Fantázie | `https://fantazie30.helceletka.cz/?stanoviste=11` |
-| **12** | Vchody do Fantázie | `https://fantazie30.helceletka.cz/?stanoviste=12` |
+| # | Místo ve Slatině | Souřadnice | Otázka na stanovišti | Cílová adresa v QR kódu |
+|---|---|---|---|---|
+| **01** | **Fantázie** | `49.1800750N, 16.6803050E` | Jaký rok byla založena pobočka Fantázie? | `https://fantazie30.helceletka.cz/?stanoviste=1` |
+| **02** | **Hřiště Černozemní** | `49.1766108N, 16.6829831E` | Jakou akci pořádá Fantázie na hřišti Černozemní? | `https://fantazie30.helceletka.cz/?stanoviste=2` |
+| **03** | **Hřiště Kikrleho** | `49.1760744N, 16.6895458E` | Kolik nabízí Fantázie ve školním roce 2026/2027 kroužků? | `https://fantazie30.helceletka.cz/?stanoviste=3` |
+| **04** | **Kostel** | `49.1772528N, 16.6917161E` | Kolik má pobočka Fantázie v současnosti učeben ve Slatině? | `https://fantazie30.helceletka.cz/?stanoviste=4` |
+| **05** | **Hřiště Hliník** | `49.1781458N, 16.6891119E` | Jaké zvíře plave v jezírku na zahradě Fantázie? | `https://fantazie30.helceletka.cz/?stanoviste=5` |
+| **06** | **Kaplička sv. Floriana** | `49.1769903N, 16.6876289E` | Z jakých ulic můžete vejít do budovy Fantázie? | `https://fantazie30.helceletka.cz/?stanoviste=6` |
+| **07** | **Kašna Přemyslovo nám.** | `49.1777133N, 16.6845622E` | Jaké dva hlavní typy táborů Fantázie každoročně pořádá? | `https://fantazie30.helceletka.cz/?stanoviste=7` |
+| **08** | **ZŠ Jihomoravské nám.** | `49.1795894N, 16.6854603E` | Kolik hlíny Fantázie spotřebuje za jeden školní rok? | `https://fantazie30.helceletka.cz/?stanoviste=8` |
+| **09** | **Bublina** | `49.1803011N, 16.6853039E` | Jakou barvou je vymalována keramická učebna? | `https://fantazie30.helceletka.cz/?stanoviste=9` |
+| **10** | **Hřiště Vlnitá** | `49.1812458N, 16.6803208E` | Kolik mají celkem na pobočce Fantázie schodů? | `https://fantazie30.helceletka.cz/?stanoviste=10` |
+| **11** | **Hřiště Vlárská** | `49.1824611N, 16.6745050E` | Ve které obci pobočka Fantázie nepůsobí? | `https://fantazie30.helceletka.cz/?stanoviste=11` |
+| **12** | **Hřiště Langrova** | `49.1802847N, 16.6760486E` | Který z těchto kroužků na Fantázii najdete v nabídce? | `https://fantazie30.helceletka.cz/?stanoviste=12` |
